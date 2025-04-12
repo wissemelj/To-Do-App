@@ -1,12 +1,13 @@
 <?php
+// --- Authentification ---
 require_once '../src/includes/auth.php';
 requireLogin();
 
+// --- Connexion à la base de données ---
 require_once '../src/includes/database.php';
-
 $userId = getLoggedInUserId();
 
-// Récupération des tâches
+// --- Récupération des tâches (créées ou assignées à l'utilisateur) ---
 $stmt = $pdo->prepare("
     SELECT tasks.*, users.username AS assigned_username 
     FROM tasks 
@@ -17,13 +18,12 @@ $stmt = $pdo->prepare("
 $stmt->execute([$userId, $userId]);
 $allTasks = $stmt->fetchAll();
 
-// Organisation par statut
+// --- Organisation des tâches par statut ---
 $tasksByStatus = [
     'todo' => [],
     'in_progress' => [],
     'done' => []
 ];
-
 foreach ($allTasks as $task) {
     $tasksByStatus[$task['status']][] = $task;
 }
@@ -31,48 +31,202 @@ foreach ($allTasks as $task) {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Tableau de bord - Gestion des tâches</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tableau de bord - Task Manager</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <style>
+        <?php // CSS global, regroupé pour la clarté ?>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 2rem;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .column {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            min-height: 70vh;
+        }
+
+        .column-header {
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .task-list {
+            min-height: 100px;
+        }
+
+        .task {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .task:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .task-title {
+            color: var(--text-dark);
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .task-actions button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            margin-left: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .task-actions button:hover {
+            color: var(--primary-color);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 1200px) {
+            .board {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>
-                Mes Tâches
-                <button onclick="showTaskForm()">+ Nouvelle tâche</button>
-                <a href="logout.php" class="logout-btn">Déconnexion</a>
-            </h1>
+        <!-- En-tête -->
+        <header class="dashboard-header">
+            <h1 class="header-title">Mes Tâches</h1>
+            <div>
+                <button class="btn-primary" onclick="showTaskForm()">+ Nouvelle tâche</button>
+                <a href="calendar.php" class="btn-primary" >Calendrier</a>
+                <a href="logout.php" class="btn-primary" style="margin-left: 10px;">Déconnexion</a>
+            </div>
         </header>
 
+        <!-- Tableau des tâches -->
         <div class="board">
             <?php foreach (['todo' => 'À Faire', 'in_progress' => 'En Cours', 'done' => 'Terminé'] as $status => $label): ?>
-            <div class="column" data-status="<?= $status ?>">
-                <h2><?= $label ?></h2>
+            <div class="column">
+                <h2 class="column-header"><?= $label ?></h2>
                 <div class="task-list">
                     <?php foreach ($tasksByStatus[$status] as $task): ?>
                     <div class="task" data-task-id="<?= $task['id'] ?>">
                         <div class="task-header">
-                            <h3>
-                                <a href="task.php?id=<?= $task['id'] ?>">
-                                    <?= htmlspecialchars($task['title']) ?>
-                                </a>
-                            </h3>
+                            <h3 class="task-title"><?= htmlspecialchars($task['title']) ?></h3>
                             <div class="task-actions">
-                                <button onclick="editTask(<?= $task['id'] ?>)">✏️</button>
-                                <button onclick="deleteTask(<?= $task['id'] ?>)">🗑️</button>
+                                <button onclick="editTask(<?= $task['id'] ?>)" title="Modifier">✏️</button>
+                                <button onclick="deleteTask(<?= $task['id'] ?>)" title="Supprimer">🗑️</button>
                             </div>
                         </div>
                         <?php if (!empty($task['description'])): ?>
-                        <p><?= htmlspecialchars($task['description']) ?></p>
+                        <p class="task-description"><?= htmlspecialchars($task['description']) ?></p>
                         <?php endif; ?>
-                        <?php if ($task['assigned_username']): ?>
-                        <div class="assigned-to">
-                            👤 <?= htmlspecialchars($task['assigned_username']) ?>
+                        <div class="task-footer">
+                            <?php if ($task['due_date']): ?>
+                            <span class="task-due">📅 <?= date('d/m/Y H:i', strtotime($task['due_date'])) ?></span>
+                            <?php endif; ?>
+                            <?php if ($task['assigned_username']): ?>
+                            <span class="task-assignee">👤 <?= htmlspecialchars($task['assigned_username']) ?></span>
+                            <?php endif; ?>
                         </div>
-                        <?php endif; ?>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -83,70 +237,63 @@ foreach ($allTasks as $task) {
         <!-- Formulaire de création -->
         <div id="taskForm" class="modal-overlay" style="display: none;">
             <div class="modal-content">
-                <h3>Nouvelle tâche</h3>
+                <h3>Créer une nouvelle tâche</h3>
                 <form id="newTaskForm">
                     <div class="form-group">
                         <input type="text" name="title" placeholder="Titre" required>
                     </div>
-                    
                     <div class="form-group">
                         <textarea name="description" placeholder="Description"></textarea>
                     </div>
-
                     <div class="form-group">
-                        <label>Assigner à :</label>
-                        <select name="assigned_to" id="assignedToSelect">
-                            <option value="">Personne</option>
+                        <select name="assigned_to">
+                            <option value="">Assigner à...</option>
+                            <?php 
+                            $users = $pdo->query("SELECT id, username FROM users")->fetchAll();
+                            foreach ($users as $user): ?>
+                            <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-
                     <div class="form-group">
-                        <label>Date limite :</label>
                         <input type="datetime-local" name="due_date">
                     </div>
-
                     <div class="form-buttons">
-                        <button type="submit">Créer</button>
-                        <button type="button" onclick="hideTaskForm()">Annuler</button>
+                        <button type="submit" class="btn-primary">Créer</button>
+                        <button type="button" class="btn-primary" onclick="hideTaskForm()">Annuler</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- JS externe -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     <script>
     // État global
     let users = [];
 
-    // Chargement initial
+    // Initialisation
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            // Charger les utilisateurs
             const usersResponse = await axios.get('../src/actions/get_users.php');
             if (usersResponse.data.success) {
                 users = usersResponse.data.data;
                 updateAssignSelect();
             }
-
-            // Initialiser le drag and drop
-            initSortable();
         } catch (error) {
             console.error('Erreur initialisation:', error);
         }
     });
 
-    // Mettre à jour la liste déroulante d'assignation
     function updateAssignSelect() {
         const select = document.getElementById('assignedToSelect');
-        select.innerHTML = `
-            <option value="">Personne</option>
-            ${users.map(user => `
-                <option value="${user.id}">${user.username}</option>
-            `).join('')}
-        `;
+        if (!select) return;
+        select.innerHTML = `<option value="">Personne</option>` +
+            users.map(user => `<option value="${user.id}">${user.username}</option>`).join('');
     }
 
-    // Gestion formulaires
     function showTaskForm() {
         document.getElementById('taskForm').style.display = 'flex';
     }
@@ -155,58 +302,28 @@ foreach ($allTasks as $task) {
         document.getElementById('taskForm').style.display = 'none';
     }
 
-    // Soumission formulaire création
     document.getElementById('newTaskForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const formData = {
             title: e.target.title.value,
             description: e.target.description.value,
             assigned_to: e.target.assigned_to.value || null,
             due_date: e.target.due_date.value
         };
-
         try {
             const response = await axios.post('../src/actions/task_action.php', formData);
-            
             if (response.data.success) {
                 window.location.reload();
             } else {
                 alert('Erreur: ' + (response.data.error || 'Inconnue'));
             }
         } catch (error) {
-            console.error('Erreur complète:', error);
             alert('Erreur réseau: ' + error.message);
         }
     });
 
-    // Drag and drop
-    function initSortable() {
-        document.querySelectorAll('.task-list').forEach(list => {
-            Sortable.create(list, {
-                group: 'tasks',
-                animation: 150,
-                onEnd: async (e) => {
-                    const taskId = e.item.dataset.taskId;
-                    const newStatus = e.to.parentElement.dataset.status;
-                    
-                    try {
-                        await axios.post('../src/actions/update_task_status.php', {
-                            task_id: taskId,
-                            status: newStatus
-                        });
-                    } catch (error) {
-                        alert('Erreur mise à jour statut: ' + error.response?.data?.error);
-                    }
-                }
-            });
-        });
-    }
-
-    // Suppression
     async function deleteTask(taskId) {
         if (!confirm('Supprimer cette tâche définitivement ?')) return;
-        
         try {
             await axios.post('../src/actions/delete_task.php', { task_id: taskId });
             window.location.reload();
@@ -215,7 +332,6 @@ foreach ($allTasks as $task) {
         }
     }
 
-    // Édition
     async function editTask(taskId) {
         try {
             const response = await axios.get(`../src/actions/get_task.php?id=${taskId}`);
@@ -226,25 +342,21 @@ foreach ($allTasks as $task) {
         }
     }
 
-    // Remplacer la fonction showEditForm par :
-function showEditForm(task) {
-    const formHTML = `
+    function showEditForm(task) {
+        const formHTML = `
         <div class="modal-overlay" id="editModal">
             <div class="modal-content">
                 <h3>Modifier la tâche</h3>
                 <form id="editForm">
                     <input type="hidden" name="id" value="${task.id}">
-                    
                     <div class="form-group">
                         <label>Titre:</label>
                         <input type="text" name="title" value="${task.title}" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>Description:</label>
                         <textarea name="description">${task.description || ''}</textarea>
                     </div>
-                    
                     <div class="form-group">
                         <label>Statut:</label>
                         <select name="status">
@@ -253,25 +365,19 @@ function showEditForm(task) {
                             <option value="done" ${task.status === 'done' ? 'selected' : ''}>Terminé</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>Assigné à:</label>
                         <select name="assigned_to">
                             <option value="">Personne</option>
                             ${users.map(user => `
-                                <option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>
-                                    ${user.username}
-                                </option>
+                                <option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>${user.username}</option>
                             `).join('')}
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>Date limite:</label>
-                        <input type="datetime-local" name="due_date" 
-                            value="${task.due_date ? task.due_date.slice(0, 16) : ''}">
+                        <input type="datetime-local" name="due_date" value="${task.due_date ? task.due_date.slice(0, 16) : ''}">
                     </div>
-                    
                     <div class="form-buttons">
                         <button type="submit">Enregistrer</button>
                         <button type="button" onclick="closeEditForm()">Annuler</button>
@@ -279,38 +385,32 @@ function showEditForm(task) {
                 </form>
             </div>
         </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', formHTML);
-    
-    document.getElementById('editForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = {
-            id: e.target.id.value,
-            title: e.target.title.value,
-            description: e.target.description.value,
-            status: e.target.status.value,
-            assigned_to: e.target.assigned_to.value || null,
-            due_date: e.target.due_date.value
-        };
-
-        try {
-            const response = await axios.post('../src/actions/edit_task.php', formData, {
-                headers: {
-                    'Content-Type': 'application/json'
+        `;
+        document.body.insertAdjacentHTML('beforeend', formHTML);
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                id: e.target.id.value,
+                title: e.target.title.value,
+                description: e.target.description.value,
+                status: e.target.status.value,
+                assigned_to: e.target.assigned_to.value || null,
+                due_date: e.target.due_date.value
+            };
+            try {
+                const response = await axios.post('../src/actions/edit_task.php', formData, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Erreur : ' + (response.data.error || 'Modification échouée'));
                 }
-            });
-            
-            if (response.data.success) {
-                window.location.reload();
-            } else {
-                alert('Erreur : ' + (response.data.error || 'Modification échouée'));
+            } catch (error) {
+                alert('Erreur réseau : ' + error.message);
             }
-        } catch (error) {
-            alert('Erreur réseau : ' + error.message);
-        }
-    });
-}
+        });
+    }
 
     function closeEditForm() {
         document.getElementById('editModal').remove();

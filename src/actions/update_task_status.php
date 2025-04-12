@@ -11,19 +11,22 @@ if (!isLoggedIn()) {
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
-$taskId = $data['task_id'] ?? null;
-$status = $data['status'] ?? null;
-
-if (!$taskId || !in_array($status, ['todo', 'in_progress', 'done'])) {
-    echo json_encode(['success' => false]);
-    exit();
-}
 
 try {
-    $stmt = $pdo->prepare("UPDATE tasks SET status = ? WHERE id = ?");
-    $stmt->execute([$status, $taskId]);
+    $stmt = $pdo->prepare("
+        UPDATE tasks
+        SET due_date = ?
+        WHERE id = ?
+    ");
+    
+    $stmt->execute([
+        date('Y-m-d H:i:s', strtotime($data['new_date'])),
+        $data['task_id']
+    ]);
+    
     echo json_encode(['success' => true]);
+
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false]);
 }
 ?>
