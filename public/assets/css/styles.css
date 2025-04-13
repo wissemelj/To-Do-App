@@ -1,3 +1,17 @@
+/* Variables */
+:root {
+    --primary-color: #28a745;
+    --secondary-color: #6c757d;
+    --danger-color: #dc3545;
+    --danger-hover: #c82333;
+    --text-color: #333;
+    --muted-text: #666;
+    --bg-light: #fff;
+    --border-color: #ddd;
+    --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --transition: 0.3s;
+}
+
 /* Base */
 body {
     font-family: 'Arial', sans-serif;
@@ -18,22 +32,22 @@ header {
     align-items: center;
     margin-bottom: 30px;
     padding: 15px;
-    background: #fff;
+    background: var(--bg-light);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-light);
 }
 
 .logout-btn {
-    background: #dc3545;
+    background: var(--danger-color);
     color: white;
     padding: 8px 16px;
     text-decoration: none;
     border-radius: 4px;
-    transition: background 0.3s;
+    transition: background var(--transition);
 }
 
 .logout-btn:hover {
-    background: #c82333;
+    background: var(--danger-hover);
 }
 
 /* Board */
@@ -44,10 +58,10 @@ header {
 }
 
 .column {
-    background: #fff;
+    background: var(--bg-light);
     padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-light);
 }
 
 .task-list {
@@ -56,11 +70,11 @@ header {
 }
 
 .task {
-    background: #fff;
+    background: var(--bg-light);
     padding: 15px;
     margin-bottom: 10px;
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
 }
 
@@ -85,18 +99,16 @@ header {
 
 .assigned-to {
     font-size: 0.9em;
-    color: #666;
+    color: var(--muted-text);
     margin-top: 8px;
 }
 
-/* Formulaire d'édition */
+/* Modale d'édition */
 .edit-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -104,13 +116,14 @@ header {
 }
 
 .edit-form {
-    background: white;
+    background: var(--bg-light);
     padding: 25px;
     border-radius: 10px;
     width: 500px;
     max-width: 90%;
 }
 
+/* Formulaires */
 .form-group {
     margin-bottom: 15px;
 }
@@ -119,7 +132,7 @@ header {
     display: block;
     margin-bottom: 5px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
 }
 
 .form-group input,
@@ -127,7 +140,7 @@ header {
 .form-group select {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     box-sizing: border-box;
 }
@@ -146,26 +159,24 @@ header {
 }
 
 .form-actions button[type="submit"] {
-    background: #28a745;
+    background: var(--primary-color);
     color: white;
 }
 
 .form-actions button[type="button"] {
-    background: #6c757d;
+    background: var(--secondary-color);
     color: white;
 }
 
-
-/* Style du formulaire */
+/* Formulaire d'ajout / modification de tâche */
 #taskForm {
     position: fixed;
-    top: 50%;
-    left: 50%;
+    top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    background: white;
+    background: var(--bg-light);
     padding: 2rem;
     border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     z-index: 1000;
     width: 500px;
     max-width: 95%;
@@ -180,7 +191,7 @@ header {
 .task-form select {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     margin-top: 5px;
 }
@@ -191,12 +202,8 @@ header {
     gap: 1rem;
     justify-content: flex-end;
 }
-/* Ajouter pour le feedback visuel */
-#taskForm {
-    z-index: 1000;
-    background: rgba(0,0,0,0.5);
-}
 
+/* Feedback visuel */
 .loading-spinner {
     display: none;
     position: fixed;

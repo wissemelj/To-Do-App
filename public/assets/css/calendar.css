@@ -1,0 +1,249 @@
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --text-dark: #2d3748;
+    --text-light: #718096;
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    min-height: 100vh;
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.header-title {
+    font-size: 1.8rem;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-container {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    margin: 20px auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    min-height: 60vh;
+}
+
+/* FullCalendar Customization */
+#calendar {
+    height: 650px;
+}
+
+.fc-toolbar {
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 0;
+    margin-bottom: 10px !important;
+}
+
+.fc-toolbar-title {
+    font-size: 1.4rem;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.fc-button-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    font-size: 0.85rem !important;
+    transition: transform 0.2s ease !important;
+}
+
+.fc-button-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.fc-col-header-cell {
+    padding: 6px 0 !important;
+}
+
+.fc-col-header-cell-cushion {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.fc-daygrid-day-number {
+    font-size: 0.8rem;
+    padding: 2px 4px !important;
+}
+
+.fc-event {
+    border: none;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 1px 0;
+    font-size: 0.75rem;
+    line-height: 1.1;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.fc-daygrid-event-dot {
+    display: none;
+}
+
+@media (max-width: 1200px) {
+    .container {
+        max-width: 95%;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+
+    #calendar {
+        height: 550px;
+    }
+
+    .fc-toolbar-title {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    #calendar {
+        height: 450px;
+    }
+
+    .fc-header-toolbar .fc-toolbar-chunk {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        padding: 8px 15px;
+        font-size: 0.8rem;
+    }
+
+    .header-title {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #calendar {
+        height: 400px;
+    }
+
+    .fc-toolbar-title {
+        font-size: 1rem;
+    }
+
+    .fc-button-primary {
+        padding: 4px 8px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .fc-col-header-cell-cushion {
+        font-size: 0.75rem;
+    }
+}
+
+/* Task Modal Styles */
+.task-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.task-modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.task-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.task-modal-title {
+    margin: 0 0 15px 0;
+    color: var(--text-dark);
+}
+
+.task-modal-info {
+    margin-bottom: 10px;
+}
+
+.task-modal-label {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.task-modal-value {
+    color: var(--text-light);
+    margin-left: 8px;
+}
