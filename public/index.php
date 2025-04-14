@@ -172,14 +172,19 @@ foreach ($allTasks as $task) {
     });
 
     async function deleteTask(taskId) {
-        if (!confirm('Supprimer cette tâche définitivement ?')) return;
-        try {
-            await axios.post('../src/actions/delete_task.php', { task_id: taskId });
+    if (!confirm('Supprimer cette tâche définitivement ?')) return;
+    try {
+        const response = await axios.post('../src/actions/delete_task.php', { task_id: taskId });
+        if (response.data.success) {
             window.location.reload();
-        } catch (error) {
-            alert('Erreur suppression: ' + error.response?.data?.error);
+        } else {
+            alert('Erreur: ' + (response.data.error || 'Suppression échouée'));
         }
+    } catch (error) {
+        const errorMsg = error.response?.data?.error || error.message;
+        alert('Erreur suppression: ' + errorMsg);
     }
+}
 
     async function editTask(taskId) {
         try {
