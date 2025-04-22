@@ -21,12 +21,8 @@ if (!$taskId) {
 
 // delete_task.php (modified)
 try {
-    // Vérifier les permissions
-    $stmt = $pdo->prepare("SELECT created_by FROM tasks WHERE id = ?");
-    $stmt->execute([$taskId]);
-    $task = $stmt->fetch();
-
-    if (!$task || $task['created_by'] !== $userId) {
+    // Vérifier les permissions avec la nouvelle fonction canModifyTask
+    if (!canModifyTask((int)$taskId)) {
         echo json_encode(['success' => false, 'error' => 'Permission refusée']);
         exit();
     }
@@ -34,10 +30,10 @@ try {
     // Suppression
     $pdo->beginTransaction();
     // Remove this line: $stmt = $pdo->prepare("DELETE FROM comments WHERE task_id = ?");
-    
+
     $stmt = $pdo->prepare("DELETE FROM tasks WHERE id = ?");
     $stmt->execute([$taskId]);
-    
+
     $pdo->commit();
     echo json_encode(['success' => true]);
 } catch (PDOException $e) {

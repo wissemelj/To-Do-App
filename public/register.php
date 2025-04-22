@@ -40,6 +40,14 @@ if (isLoggedIn()) {
                 </div>
                 <p class="password-requirements">Minimum 8 caractères</p>
 
+                <div class="input-group">
+                    <select name="role">
+                        <option value="collaborator">Collaborateur</option>
+                        <option value="manager">Manager</option>
+                    </select>
+                    <i class="fas fa-user-tag input-icon"></i>
+                </div>
+
                 <button type="submit" class="register-button">S'inscrire</button>
             </form>
 
@@ -51,14 +59,14 @@ if (isLoggedIn()) {
 
     <!-- Font Awesome -->
     <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
-    
+
     <!-- Script de gestion du formulaire -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            
+
             try {
                 const response = await axios.post(e.target.action, formData);
                 if (response.data.success) {

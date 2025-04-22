@@ -14,23 +14,23 @@ try {
     $userId = getLoggedInUserId();
     $taskId = (int)$_GET['id'];
 
+    // Tous les utilisateurs peuvent voir toutes les tâches dans le calendrier
     $stmt = $pdo->prepare("
-        SELECT 
-            tasks.*, 
+        SELECT
+            tasks.*,
             assignee.username AS assigned_username,
             creator.username AS creator_username
         FROM tasks
         LEFT JOIN users AS assignee ON tasks.assigned_to = assignee.id
         INNER JOIN users AS creator ON tasks.created_by = creator.id
         WHERE tasks.id = ?
-        AND (tasks.created_by = ? OR tasks.assigned_to = ?)
     ");
-    
-    $stmt->execute([$taskId, $userId, $userId]);
+    $stmt->execute([$taskId]);
+
     $task = $stmt->fetch();
 
     if (!$task) {
-        throw new Exception('Tâche non trouvée ou accès non autorisé');
+        throw new Exception('Tâche non trouvée');
     }
 
     echo json_encode([

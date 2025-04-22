@@ -22,19 +22,15 @@ foreach ($requiredFields as $field) {
 }
 
 try {
-    // Vérifier les permissions
-    $stmt = $pdo->prepare("SELECT created_by FROM tasks WHERE id = ?");
-    $stmt->execute([$input['id']]);
-    $task = $stmt->fetch();
-
-    if (!$task || $task['created_by'] !== getLoggedInUserId()) {
+    // Vérifier les permissions avec la nouvelle fonction canModifyTask
+    if (!canModifyTask((int)$input['id'])) {
         echo json_encode(['success' => false, 'error' => 'Permission refusée']);
         exit();
     }
 
     // Préparation des données
-    $dueDate = !empty($input['due_date']) 
-        ? date('Y-m-d H:i:s', strtotime($input['due_date'])) 
+    $dueDate = !empty($input['due_date'])
+        ? date('Y-m-d H:i:s', strtotime($input['due_date']))
         : null;
 
     // Mise à jour
@@ -62,7 +58,7 @@ try {
 } catch (PDOException $e) {
     error_log('Erreur BDD: ' . $e->getMessage());
     echo json_encode([
-        'success' => false, 
+        'success' => false,
         'error' => 'Erreur de mise à jour: ' . $e->getMessage()
     ]);
 }

@@ -29,9 +29,10 @@ try {
 
     // Créer l'utilisateur
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-    $stmt->execute([$username, $email, $hashedPassword]);
-    
+    $role = isset($_POST['role']) && $_POST['role'] === 'manager' ? 'manager' : 'collaborator';
+    $stmt = $pdo->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$username, $email, $hashedPassword, $role]);
+
     echo json_encode(['success' => true]);
 
 } catch (PDOException $e) {

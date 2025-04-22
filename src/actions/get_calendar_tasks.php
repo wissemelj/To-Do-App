@@ -13,17 +13,16 @@ if (!isLoggedIn()) {
 $userId = getLoggedInUserId();
 
 try {
+    // Tous les utilisateurs voient toutes les tâches dans le calendrier
     $stmt = $pdo->prepare("
-        SELECT 
+        SELECT
             id,
             title,
             due_date AS start,
             status
         FROM tasks
-        WHERE created_by = ? OR assigned_to = ?
     ");
-    
-    $stmt->execute([$userId, $userId]);
+    $stmt->execute();
     $tasks = $stmt->fetchAll();
 
     $events = [];

@@ -18,10 +18,17 @@ if (!$taskId) {
 }
 
 try {
+    // Vérifier si l'utilisateur peut voir cette tâche
+    if (!canViewTask((int)$taskId)) {
+        echo json_encode(['success' => false, 'error' => 'Tâche introuvable ou accès non autorisé']);
+        exit();
+    }
+
     $stmt = $pdo->prepare("
-        SELECT tasks.*, users.username AS assigned_username 
-        FROM tasks 
-        LEFT JOIN users ON tasks.assigned_to = users.id 
+        SELECT tasks.*, users.username AS assigned_username, creator.username AS creator_username
+        FROM tasks
+        LEFT JOIN users ON tasks.assigned_to = users.id
+        LEFT JOIN users AS creator ON tasks.created_by = creator.id
         WHERE tasks.id = ?
     ");
     $stmt->execute([$taskId]);
@@ -33,8 +40,8 @@ try {
     }
 
     // Formater la date pour le formulaire
-    $task['due_date'] = $task['due_date'] 
-        ? date('Y-m-d\TH:i', strtotime($task['due_date'])) 
+    $task['due_date'] = $task['due_date']
+        ? date('Y-m-d\TH:i', strtotime($task['due_date']))
         : null;
 
     echo json_encode([

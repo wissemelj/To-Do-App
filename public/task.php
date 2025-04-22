@@ -11,10 +11,16 @@ if (!$taskId) {
     exit();
 }
 
+// Vérifier si l'utilisateur peut voir cette tâche
+if (!canViewTask((int)$taskId)) {
+    header("Location: index.php");
+    exit();
+}
+
 // Récupérer la tâche
 $stmt = $pdo->prepare("
-    SELECT tasks.*, users.username AS creator, assigned.username AS assignee 
-    FROM tasks 
+    SELECT tasks.*, users.username AS creator, assigned.username AS assignee
+    FROM tasks
     LEFT JOIN users ON tasks.created_by = users.id
     LEFT JOIN users AS assigned ON tasks.assigned_to = assigned.id
     WHERE tasks.id = ?
@@ -29,9 +35,9 @@ if (!$task) {
 
 // Récupérer les commentaires
 $stmt = $pdo->prepare("
-    SELECT comments.*, users.username 
-    FROM comments 
-    JOIN users ON comments.user_id = users.id 
+    SELECT comments.*, users.username
+    FROM comments
+    JOIN users ON comments.user_id = users.id
     WHERE task_id = ?
 ");
 $stmt->execute([$taskId]);
@@ -48,7 +54,7 @@ $comments = $stmt->fetchAll();
     <div class="container">
         <a href="index.php">← Retour</a>
         <h1><?= htmlspecialchars($task['title']) ?></h1>
-        
+
         <div class="task-details">
             <p><strong>Description :</strong> <?= htmlspecialchars($task['description']) ?></p>
             <p><strong>Statut :</strong> <?= ucfirst($task['status']) ?></p>

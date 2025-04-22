@@ -19,7 +19,10 @@ $userId = getLoggedInUserId();
 <body>
     <div class="container">
         <header class="dashboard-header">
-            <h1 class="header-title">Calendrier des Tâches</h1>
+            <div class="header-left">
+                <h1 class="header-title">Calendrier des Tâches</h1>
+                <span class="user-role"><?= isManager() ? 'Manager' : 'Collaborateur' ?></span>
+            </div>
             <div>
                 <a href="index.php" class="btn-primary">Retour au tableau</a>
                 <a href="logout.php" class="btn-primary" style="margin-left: 10px;">Déconnexion</a>
@@ -51,6 +54,10 @@ $userId = getLoggedInUserId();
                     <p class="task-modal-info">
                         <span class="task-modal-label">Assigné à:</span>
                         <span class="task-modal-value" id="taskModalAssignee"></span>
+                    </p>
+                    <p class="task-modal-info">
+                        <span class="task-modal-label">Créé par:</span>
+                        <span class="task-modal-value" id="taskModalCreator"></span>
                     </p>
                 </div>
             </div>
@@ -120,12 +127,12 @@ $userId = getLoggedInUserId();
             if (!response.data.success) {
                 throw new Error(response.data.error || 'Erreur inconnue');
             }
-            
+
             const task = response.data.task;
             document.getElementById('taskModalTitle').textContent = task.title;
             document.getElementById('taskModalDescription').textContent = task.description || 'Aucune description';
             document.getElementById('taskModalStatus').textContent = getStatusLabel(task.status);
-            document.getElementById('taskModalDueDate').textContent = task.due_date ? 
+            document.getElementById('taskModalDueDate').textContent = task.due_date ?
                 new Date(task.due_date).toLocaleString('fr-FR', {
                     year: 'numeric',
                     month: '2-digit',
@@ -134,7 +141,8 @@ $userId = getLoggedInUserId();
                     minute: '2-digit'
                 }) : 'Non défini';
             document.getElementById('taskModalAssignee').textContent = task.assigned_username || 'Non assigné';
-            
+            document.getElementById('taskModalCreator').textContent = task.creator_username || 'Inconnu';
+
             document.getElementById('taskModal').style.display = 'flex';
 
         } catch (error) {
@@ -164,4 +172,4 @@ $userId = getLoggedInUserId();
 </script>
 
 </body>
-</html> 
+</html>

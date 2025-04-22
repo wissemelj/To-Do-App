@@ -7,15 +7,15 @@ requireLogin();
 require_once '../src/includes/database.php';
 $userId = getLoggedInUserId();
 
-// --- Récupération des tâches (créées ou assignées à l'utilisateur) ---
+// --- Récupération de toutes les tâches (tous les utilisateurs peuvent voir toutes les tâches) ---
 $stmt = $pdo->prepare("
-    SELECT tasks.*, users.username AS assigned_username 
-    FROM tasks 
-    LEFT JOIN users ON tasks.assigned_to = users.id 
-    WHERE tasks.created_by = ? OR tasks.assigned_to = ?
+    SELECT tasks.*, users.username AS assigned_username, creator.username AS creator_username
+    FROM tasks
+    LEFT JOIN users ON tasks.assigned_to = users.id
+    LEFT JOIN users AS creator ON tasks.created_by = creator.id
     ORDER BY tasks.due_date ASC
 ");
-$stmt->execute([$userId, $userId]);
+$stmt->execute();
 $allTasks = $stmt->fetchAll();
 
 // --- Organisation des tâches par statut ---
@@ -42,7 +42,10 @@ foreach ($allTasks as $task) {
     <div class="container">
         <!-- En-tête -->
         <header class="dashboard-header">
-            <h1 class="header-title"> Tâches</h1>
+            <div class="header-left">
+                <h1 class="header-title">Tâches</h1>
+                <span class="user-role"><?= isManager() ? 'Manager' : 'Collaborateur' ?></span>
+            </div>
             <div>
                 <button class="btn-primary" onclick="showTaskForm()">+ Nouvelle tâche</button>
                 <a href="calendar.php" class="btn-primary" >Calendrier</a>
@@ -61,8 +64,12 @@ foreach ($allTasks as $task) {
                         <div class="task-header">
                             <h3 class="task-title"><?= htmlspecialchars($task['title']) ?></h3>
                             <div class="task-actions">
-                                <button onclick="editTask(<?= $task['id'] ?>)" title="Modifier">✏️</button>
-                                <button onclick="deleteTask(<?= $task['id'] ?>)" title="Supprimer">🗑️</button>
+                                <?php if (isManager() || $task['created_by'] === $userId || $task['assigned_to'] === $userId): ?>
+                                    <button onclick="editTask(<?= $task['id'] ?>)" title="Modifier">✏️</button>
+                                    <?php if (isManager() || $task['created_by'] === $userId): ?>
+                                        <button onclick="deleteTask(<?= $task['id'] ?>)" title="Supprimer">🗑️</button>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <?php if (!empty($task['description'])): ?>
@@ -73,7 +80,10 @@ foreach ($allTasks as $task) {
                             <span class="task-due">📅 <?= date('d/m/Y H:i', strtotime($task['due_date'])) ?></span>
                             <?php endif; ?>
                             <?php if ($task['assigned_username']): ?>
-                            <span class="task-assignee">👤 <?= htmlspecialchars($task['assigned_username']) ?></span>
+                            <span class="task-assignee">👤 Assigné à: <?= htmlspecialchars($task['assigned_username']) ?></span>
+                            <?php endif; ?>
+                            <?php if (isset($task['creator_username'])): ?>
+                            <span class="task-creator">📝 Créé par: <?= htmlspecialchars($task['creator_username']) ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -87,17 +97,21 @@ foreach ($allTasks as $task) {
         <div id="taskForm" class="modal-overlay" style="display: none;">
             <div class="modal-content">
                 <h3>Créer une nouvelle tâche</h3>
+                <button type="button" class="modal-close" onclick="hideTaskForm()">&times;</button>
                 <form id="newTaskForm">
                     <div class="form-group">
-                        <input type="text" name="title" placeholder="Titre" required>
+                        <label for="task-title">Titre:</label>
+                        <input type="text" id="task-title" name="title" required>
                     </div>
                     <div class="form-group">
-                        <textarea name="description" placeholder="Description"></textarea>
+                        <label for="task-description">Description:</label>
+                        <textarea id="task-description" name="description"></textarea>
                     </div>
                     <div class="form-group">
-                        <select name="assigned_to">
-                            <option value="">Assigner à...</option>
-                            <?php 
+                        <label for="task-assigned">Assigner à:</label>
+                        <select id="task-assigned" name="assigned_to">
+                            <option value="">Personne</option>
+                            <?php
                             $users = $pdo->query("SELECT id, username FROM users")->fetchAll();
                             foreach ($users as $user): ?>
                             <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
@@ -105,11 +119,12 @@ foreach ($allTasks as $task) {
                         </select>
                     </div>
                     <div class="form-group">
-                        <input type="datetime-local" name="due_date">
+                        <label for="task-due-date">Date limite:</label>
+                        <input type="datetime-local" id="task-due-date" name="due_date">
                     </div>
                     <div class="form-buttons">
                         <button type="submit" class="btn-primary">Créer</button>
-                        <button type="button" class="btn-primary" onclick="hideTaskForm()">Annuler</button>
+                        <button type="button" class="btn-secondary" onclick="hideTaskForm()">Annuler</button>
                     </div>
                 </form>
             </div>
@@ -179,6 +194,10 @@ foreach ($allTasks as $task) {
             window.location.reload();
         } else {
             alert('Erreur: ' + (response.data.error || 'Suppression échouée'));
+            // Si c'est une erreur de permission, on peut rafraîchir la page
+            if (response.data.error && (response.data.error.includes('accès non autorisé') || response.data.error.includes('Permission refusée'))) {
+                window.location.reload();
+            }
         }
     } catch (error) {
         const errorMsg = error.response?.data?.error || error.message;
@@ -189,10 +208,16 @@ foreach ($allTasks as $task) {
     async function editTask(taskId) {
         try {
             const response = await axios.get(`../src/actions/get_task.php?id=${taskId}`);
-            if (!response.data.success) throw new Error(response.data.error);
+            if (!response.data.success) {
+                throw new Error(response.data.error);
+            }
             showEditForm(response.data.data);
         } catch (error) {
             alert('Erreur: ' + error.message);
+            // Si c'est une erreur de permission, on peut rafraîchir la page
+            if (error.message.includes('accès non autorisé') || error.message.includes('Permission refusée')) {
+                window.location.reload();
+            }
         }
     }
 
@@ -201,27 +226,28 @@ foreach ($allTasks as $task) {
         <div class="modal-overlay" id="editModal">
             <div class="modal-content">
                 <h3>Modifier la tâche</h3>
+                <button type="button" class="modal-close" onclick="closeEditForm()">&times;</button>
                 <form id="editForm">
                     <input type="hidden" name="id" value="${task.id}">
                     <div class="form-group">
-                        <label>Titre:</label>
-                        <input type="text" name="title" value="${task.title}" required>
+                        <label for="edit-task-title">Titre:</label>
+                        <input type="text" id="edit-task-title" name="title" value="${task.title}" required>
                     </div>
                     <div class="form-group">
-                        <label>Description:</label>
-                        <textarea name="description">${task.description || ''}</textarea>
+                        <label for="edit-task-description">Description:</label>
+                        <textarea id="edit-task-description" name="description">${task.description || ''}</textarea>
                     </div>
                     <div class="form-group">
-                        <label>Statut:</label>
-                        <select name="status">
+                        <label for="edit-task-status">Statut:</label>
+                        <select id="edit-task-status" name="status">
                             <option value="todo" ${task.status === 'todo' ? 'selected' : ''}>À faire</option>
                             <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>En cours</option>
                             <option value="done" ${task.status === 'done' ? 'selected' : ''}>Terminé</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Assigné à:</label>
-                        <select name="assigned_to">
+                        <label for="edit-task-assigned">Assigné à:</label>
+                        <select id="edit-task-assigned" name="assigned_to">
                             <option value="">Personne</option>
                             ${users.map(user => `
                                 <option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>${user.username}</option>
@@ -229,12 +255,12 @@ foreach ($allTasks as $task) {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Date limite:</label>
-                        <input type="datetime-local" name="due_date" value="${task.due_date ? task.due_date.slice(0, 16) : ''}">
+                        <label for="edit-task-due-date">Date limite:</label>
+                        <input type="datetime-local" id="edit-task-due-date" name="due_date" value="${task.due_date ? task.due_date.slice(0, 16) : ''}">
                     </div>
                     <div class="form-buttons">
-                        <button type="submit">Enregistrer</button>
-                        <button type="button" onclick="closeEditForm()">Annuler</button>
+                        <button type="submit" class="btn-primary">Enregistrer</button>
+                        <button type="button" class="btn-secondary" onclick="closeEditForm()">Annuler</button>
                     </div>
                 </form>
             </div>
