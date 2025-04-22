@@ -45,11 +45,12 @@
 body {
     background: var(--bg-gradient);
     min-height: 100vh;
-    padding: 20px;
+    padding: 10px;
     font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
     color: var(--text-dark);
-    line-height: 1.6;
+    line-height: 1.4;
     margin: 0;
+    font-size: 0.85rem;
 }
 
 * {
@@ -59,18 +60,18 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 15px;
+    padding: 0 8px;
 }
 
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
+    margin-bottom: 12px;
+    padding: 10px;
     background: rgba(255, 255, 255, 0.95);
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-md);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
     backdrop-filter: blur(10px);
 }
 
@@ -80,18 +81,18 @@ body {
 }
 
 .user-role {
-    margin-left: 12px;
-    padding: 4px 10px;
+    margin-left: 8px;
+    padding: 3px 8px;
     background: var(--bg-gradient);
     color: var(--text-white);
-    border-radius: 15px;
-    font-size: 0.75rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
     font-weight: 600;
     box-shadow: var(--shadow-sm);
 }
 
 .header-title {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: var(--text-dark);
     margin: 0;
     font-weight: 700;
@@ -99,7 +100,7 @@ body {
 
 .btn-primary {
     display: inline-block;
-    padding: 8px 16px;
+    padding: 6px 12px;
     background: var(--bg-gradient);
     color: var(--text-white);
     border: none;
@@ -109,7 +110,7 @@ body {
     text-decoration: none;
     transition: all var(--transition-normal);
     box-shadow: var(--shadow-sm);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .btn-primary:hover {
@@ -119,18 +120,18 @@ body {
 }
 
 .calendar-container {
-    padding: 20px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.95);
-    border-radius: var(--border-radius-md);
-    margin: 15px auto;
-    box-shadow: var(--shadow-lg);
+    border-radius: var(--border-radius-sm);
+    margin: 10px auto;
+    box-shadow: var(--shadow-md);
     min-height: 60vh;
     backdrop-filter: blur(10px);
 }
 
 /* FullCalendar Customization */
 #calendar {
-    height: 650px;
+    height: 600px;
 }
 
 .fc-theme-standard .fc-scrollgrid {
@@ -143,13 +144,13 @@ body {
 
 .fc-toolbar {
     flex-direction: column;
-    gap: 10px;
-    padding: 10px 0;
-    margin-bottom: 15px !important;
+    gap: 8px;
+    padding: 6px 0;
+    margin-bottom: 10px !important;
 }
 
 .fc-toolbar-title {
-    font-size: 1.3rem !important;
+    font-size: 1.1rem !important;
     color: var(--text-dark);
     font-weight: 700;
 }
@@ -158,8 +159,8 @@ body {
     background: var(--bg-gradient) !important;
     border: none !important;
     border-radius: var(--border-radius-sm) !important;
-    padding: 6px 12px !important;
-    font-size: 0.8rem !important;
+    padding: 4px 8px !important;
+    font-size: 0.7rem !important;
     transition: all var(--transition-normal) !important;
     box-shadow: var(--shadow-sm) !important;
     font-weight: 600 !important;
@@ -178,21 +179,21 @@ body {
 }
 
 .fc-col-header-cell {
-    padding: 8px 0 !important;
+    padding: 6px 0 !important;
     background-color: var(--bg-light);
 }
 
 .fc-col-header-cell-cushion {
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     color: var(--text-dark);
     font-weight: 600;
     text-decoration: none !important;
-    padding: 6px 4px;
+    padding: 4px 2px;
 }
 
 .fc-daygrid-day-number {
-    font-size: 0.85rem;
-    padding: 5px 8px !important;
+    font-size: 0.75rem;
+    padding: 3px 6px !important;
     color: var(--text-medium);
     text-decoration: none !important;
 }
@@ -204,10 +205,10 @@ body {
 .fc-event {
     border: none;
     border-radius: var(--border-radius-sm);
-    padding: 3px 6px;
-    margin: 2px 0;
-    font-size: 0.75rem;
-    line-height: 1.2;
+    padding: 2px 4px;
+    margin: 1px 0;
+    font-size: 0.65rem;
+    line-height: 1.1;
     cursor: pointer;
     transition: all var(--transition-fast);
     box-shadow: var(--shadow-sm);
@@ -224,17 +225,17 @@ body {
 
 .fc-event.todo {
     background-color: var(--status-todo);
-    border-left: 3px solid var(--primary-dark);
+    border-left: 2px solid var(--primary-dark);
 }
 
 .fc-event.in_progress {
     background-color: var(--status-in-progress);
-    border-left: 3px solid #ed8936;
+    border-left: 2px solid #ed8936;
 }
 
 .fc-event.done {
     background-color: var(--status-done);
-    border-left: 3px solid #2c9a9a;
+    border-left: 2px solid #2c9a9a;
 }
 
 .fc-daygrid-event-dot {
@@ -385,13 +386,13 @@ body {
 
 .task-modal-content {
     background: var(--bg-white);
-    padding: 20px;
-    border-radius: var(--border-radius-md);
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
     width: 90%;
-    max-width: 500px;
+    max-width: 450px;
     position: relative;
-    animation: modalSlideIn 0.4s ease-out;
-    box-shadow: var(--shadow-lg);
+    animation: modalSlideIn 0.3s ease-out;
+    box-shadow: var(--shadow-md);
 }
 
 @keyframes modalSlideIn {
@@ -403,23 +404,23 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--bg-light);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--bg-light);
 }
 
 .task-modal-close {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 10px;
+    right: 10px;
     background: none;
     border: none;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     cursor: pointer;
     color: var(--text-light);
     transition: color var(--transition-fast), transform var(--transition-fast);
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -433,14 +434,14 @@ body {
 }
 
 .task-modal-title {
-    margin: 0 0 10px 0;
+    margin: 0 0 8px 0;
     color: var(--text-dark);
-    font-size: 1.3rem;
+    font-size: 1rem;
     font-weight: 700;
 }
 
 .task-modal-info {
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     display: flex;
     align-items: flex-start;
 }
@@ -448,26 +449,27 @@ body {
 .task-modal-label {
     color: var(--text-medium);
     font-weight: 600;
-    min-width: 100px;
+    min-width: 80px;
+    font-size: 0.75rem;
 }
 
 .task-modal-value {
     color: var(--text-dark);
-    margin-left: 8px;
+    margin-left: 6px;
     background-color: var(--bg-light);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.7rem;
 }
 
 .task-modal-description {
-    margin: 20px 0;
-    padding: 12px;
+    margin: 12px 0;
+    padding: 8px;
     background-color: var(--bg-light);
-    border-radius: var(--border-radius-md);
+    border-radius: var(--border-radius-sm);
     color: var(--text-medium);
-    line-height: 1.5;
-    font-size: 0.85rem;
+    line-height: 1.4;
+    font-size: 0.75rem;
 }
 
 .task-modal-actions {

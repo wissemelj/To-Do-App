@@ -21,9 +21,19 @@ if (!$taskId) {
 
 // delete_task.php (modified)
 try {
-    // Vérifier les permissions avec la nouvelle fonction canModifyTask
-    if (!canModifyTask((int)$taskId)) {
-        echo json_encode(['success' => false, 'error' => 'Permission refusée']);
+    // Vérifier si l'utilisateur est un manager ou le créateur de la tâche
+    $stmt = $pdo->prepare("SELECT created_by FROM tasks WHERE id = ?");
+    $stmt->execute([$taskId]);
+    $task = $stmt->fetch();
+
+    if (!$task) {
+        echo json_encode(['success' => false, 'error' => 'Tâche introuvable']);
+        exit();
+    }
+
+    // Seuls les managers ou le créateur de la tâche peuvent la supprimer
+    if (!isManager() && $task['created_by'] != $userId) {
+        echo json_encode(['success' => false, 'error' => 'Permission refusée: Seul le créateur ou un manager peut supprimer cette tâche']);
         exit();
     }
 

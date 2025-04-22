@@ -5,6 +5,19 @@ requireLogin();
 require_once '../src/includes/database.php';
 
 $userId = getLoggedInUserId();
+
+// --- Vérifier si le nom d'utilisateur est dans la session ---
+if (!isset($_SESSION['username']) && $userId) {
+    $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    if ($user) {
+        $_SESSION['username'] = $user['username'];
+    } else {
+        // Fallback au cas où l'utilisateur n'est pas trouvé
+        $_SESSION['username'] = 'Utilisateur';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">

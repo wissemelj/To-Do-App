@@ -7,6 +7,19 @@ requireLogin();
 require_once '../src/includes/database.php';
 $userId = getLoggedInUserId();
 
+// --- Vérifier si le nom d'utilisateur est dans la session ---
+if (!isset($_SESSION['username']) && $userId) {
+    $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    if ($user) {
+        $_SESSION['username'] = $user['username'];
+    } else {
+        // Fallback au cas où l'utilisateur n'est pas trouvé
+        $_SESSION['username'] = 'Utilisateur';
+    }
+}
+
 // --- Récupération de toutes les tâches (tous les utilisateurs peuvent voir toutes les tâches) ---
 $stmt = $pdo->prepare("
     SELECT tasks.*, users.username AS assigned_username, creator.username AS creator_username
@@ -109,14 +122,25 @@ foreach ($allTasks as $task) {
                     </div>
                     <div class="form-group">
                         <label for="task-assigned">Assigner à:</label>
-                        <select id="task-assigned" name="assigned_to">
-                            <option value="">Personne</option>
-                            <?php
-                            $users = $pdo->query("SELECT id, username FROM users")->fetchAll();
-                            foreach ($users as $user): ?>
-                            <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?php if (isCollaborator()): ?>
+                            <!-- Pour les collaborateurs, seule l'auto-assignation est possible -->
+                            <input type="hidden" name="assigned_to" value="<?= getLoggedInUserId() ?>">
+                            <select id="task-assigned" disabled>
+                                <option value="<?= getLoggedInUserId() ?>"><?= htmlspecialchars($_SESSION['username'] ?? 'Vous-même') ?></option>
+                            </select>
+                        <?php else: ?>
+                            <select id="task-assigned" name="assigned_to">
+                                <option value="">Personne</option>
+                                <?php
+                                $users = $pdo->query("SELECT id, username FROM users")->fetchAll();
+                                foreach ($users as $user): ?>
+                                <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php endif; ?>
+                        <?php if (isCollaborator()): ?>
+                            <small class="form-hint">En tant que collaborateur, vous ne pouvez créer des tâches que pour vous-même.</small>
+                        <?php endif; ?>
                     </div>
                     <div class="form-group">
                         <label for="task-due-date">Date limite:</label>
@@ -168,12 +192,14 @@ foreach ($allTasks as $task) {
 
     document.getElementById('newTaskForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const formData = {
             title: e.target.title.value,
             description: e.target.description.value,
             assigned_to: e.target.assigned_to.value || null,
             due_date: e.target.due_date.value
         };
+
         try {
             const response = await axios.post('../src/actions/task_action.php', formData);
             if (response.data.success) {
@@ -222,6 +248,11 @@ foreach ($allTasks as $task) {
     }
 
     function showEditForm(task) {
+        // Vérifier si l'utilisateur est un collaborateur
+        const isCollaborator = <?= isCollaborator() ? 'true' : 'false' ?>;
+        const currentUserId = <?= getLoggedInUserId() ?>;
+        const currentUsername = '<?= htmlspecialchars($_SESSION['username'] ?? 'Vous-même') ?>';
+
         const formHTML = `
         <div class="modal-overlay" id="editModal">
             <div class="modal-content">
@@ -247,12 +278,22 @@ foreach ($allTasks as $task) {
                     </div>
                     <div class="form-group">
                         <label for="edit-task-assigned">Assigné à:</label>
-                        <select id="edit-task-assigned" name="assigned_to">
-                            <option value="">Personne</option>
-                            ${users.map(user => `
-                                <option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>${user.username}</option>
-                            `).join('')}
-                        </select>
+                        ${isCollaborator
+                            ? `<input type="hidden" name="assigned_to" value="${currentUserId}">
+                               <select id="edit-task-assigned" disabled>
+                               <option value="${currentUserId}" selected>${currentUsername}</option>
+                               </select>`
+                            : `<select id="edit-task-assigned" name="assigned_to">
+                               <option value="">Personne</option>
+                               ${users.map(user => `
+                               <option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>${user.username}</option>
+                               `).join('')}
+                               </select>`
+                        }
+                        ${isCollaborator
+                            ? `<small class="form-hint">En tant que collaborateur, vous ne pouvez assigner des tâches qu'à vous-même.</small>`
+                            : ''
+                        }
                     </div>
                     <div class="form-group">
                         <label for="edit-task-due-date">Date limite:</label>
@@ -269,6 +310,10 @@ foreach ($allTasks as $task) {
         document.body.insertAdjacentHTML('beforeend', formHTML);
         document.getElementById('editForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Réutiliser les mêmes variables que dans la fonction parente
+            // pour éviter les erreurs de variables non définies
+
             const formData = {
                 id: e.target.id.value,
                 title: e.target.title.value,
