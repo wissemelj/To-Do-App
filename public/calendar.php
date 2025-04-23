@@ -1,13 +1,10 @@
 <?php
 require_once '../src/includes/auth.php';
-requireLogin();
-
 require_once '../src/includes/database.php';
 require_once '../src/includes/utils.php';
 
+requireLogin();
 $userId = getLoggedInUserId();
-
-// --- Vérifier si le nom d'utilisateur est dans la session ---
 ensureUsernameInSession($pdo, $userId);
 ?>
 <!DOCTYPE html>
@@ -74,13 +71,19 @@ ensureUsernameInSession($pdo, $userId);
     <script src="assets/js/common.js"></script>
 
     <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeCalendar();
 
-    // Initialisation du calendrier
-    document.addEventListener('DOMContentLoaded', initializeCalendar);
+        // Modal click handler
+        document.getElementById('taskModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('taskModal')) {
+                closeTaskModal();
+            }
+        });
+    });
 
     function initializeCalendar() {
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
+        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth',
             locale: 'fr',
             headerToolbar: {
@@ -88,9 +91,21 @@ ensureUsernameInSession($pdo, $userId);
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            events: fetchCalendarEvents,
-            eventClick: handleEventClick,
-            eventDidMount: styleEvent,
+            events: async (info, successCallback) => {
+                try {
+                    const response = await axios.get(API_PATHS.GET_CALENDAR_TASKS);
+                    successCallback(response.data);
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    successCallback([]);
+                }
+            },
+            eventClick: info => showTaskDetails(info.event.id),
+            eventDidMount: info => {
+                info.el.style.background = getStatusColor(info.event.extendedProps.status);
+                info.el.style.border = 'none';
+                info.el.style.fontWeight = '500';
+            },
             dayMaxEventRows: 4,
             fixedWeekCount: false,
             dayHeaderFormat: { weekday: 'short', day: 'numeric' },
@@ -103,34 +118,9 @@ ensureUsernameInSession($pdo, $userId);
         });
 
         calendar.render();
-
-        // Ajuster la taille du calendrier lors du redimensionnement de la fenêtre
         window.addEventListener('resize', () => calendar.updateSize());
     }
 
-    // Fonctions du calendrier
-    async function fetchCalendarEvents(fetchInfo, successCallback) {
-        try {
-            const response = await axios.get(API_PATHS.GET_CALENDAR_TASKS);
-            successCallback(response.data);
-        } catch (error) {
-            console.error('Erreur lors du chargement des événements:', error);
-            successCallback([]);
-        }
-    }
-
-    function handleEventClick(info) {
-        showTaskDetails(info.event.id);
-    }
-
-    function styleEvent(info) {
-        const status = info.event.extendedProps.status;
-        info.el.style.background = getStatusColor(status);
-        info.el.style.border = 'none';
-        info.el.style.fontWeight = '500';
-    }
-
-    // Gestion des détails de tâche
     async function showTaskDetails(taskId) {
         try {
             const response = await axios.get(`${API_PATHS.GET_TASK_DETAILS}?id=${taskId}`);
@@ -138,34 +128,23 @@ ensureUsernameInSession($pdo, $userId);
                 throw new Error(response.data.error || 'Erreur inconnue');
             }
 
-            displayTaskDetails(response.data.task);
+            const task = response.data.task;
+            document.getElementById('taskModalTitle').textContent = task.title;
+            document.getElementById('taskModalDescription').textContent = task.description || 'Aucune description';
+            document.getElementById('taskModalStatus').textContent = getStatusLabel(task.status);
+            document.getElementById('taskModalDueDate').textContent = formatDate(task.due_date);
+            document.getElementById('taskModalAssignee').textContent = task.assigned_username || 'Non assigné';
+            document.getElementById('taskModalCreator').textContent = task.creator_username || 'Inconnu';
+
+            toggleModal('taskModal', true);
         } catch (error) {
-            console.error('Erreur:', error);
             handleApiError(error, 'Impossible de charger les détails de la tâche');
         }
-    }
-
-    function displayTaskDetails(task) {
-        document.getElementById('taskModalTitle').textContent = task.title;
-        document.getElementById('taskModalDescription').textContent = task.description || 'Aucune description';
-        document.getElementById('taskModalStatus').textContent = getStatusLabel(task.status);
-        document.getElementById('taskModalDueDate').textContent = formatDate(task.due_date);
-        document.getElementById('taskModalAssignee').textContent = task.assigned_username || 'Non assigné';
-        document.getElementById('taskModalCreator').textContent = task.creator_username || 'Inconnu';
-
-        toggleModal('taskModal', true);
     }
 
     function closeTaskModal() {
         toggleModal('taskModal', false);
     }
-
-    // Fermer la modal en cliquant en dehors
-    document.getElementById('taskModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('taskModal')) {
-            closeTaskModal();
-        }
-    });
 </script>
 
 </body>
