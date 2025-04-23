@@ -5,41 +5,15 @@ requireLogin();
 
 // --- Connexion à la base de données ---
 require_once '../src/includes/database.php';
+require_once '../src/includes/utils.php';
+
 $userId = getLoggedInUserId();
 
 // --- Vérifier si le nom d'utilisateur est dans la session ---
-if (!isset($_SESSION['username']) && $userId) {
-    $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
-    if ($user) {
-        $_SESSION['username'] = $user['username'];
-    } else {
-        // Fallback au cas où l'utilisateur n'est pas trouvé
-        $_SESSION['username'] = 'Utilisateur';
-    }
-}
+ensureUsernameInSession($pdo, $userId);
 
-// --- Récupération de toutes les tâches (tous les utilisateurs peuvent voir toutes les tâches) ---
-$stmt = $pdo->prepare("
-    SELECT tasks.*, users.username AS assigned_username, creator.username AS creator_username
-    FROM tasks
-    LEFT JOIN users ON tasks.assigned_to = users.id
-    LEFT JOIN users AS creator ON tasks.created_by = creator.id
-    ORDER BY tasks.due_date ASC
-");
-$stmt->execute();
-$allTasks = $stmt->fetchAll();
-
-// --- Organisation des tâches par statut ---
-$tasksByStatus = [
-    'todo' => [],
-    'in_progress' => [],
-    'done' => []
-];
-foreach ($allTasks as $task) {
-    $tasksByStatus[$task['status']][] = $task;
-}
+// --- Récupération et organisation des tâches par statut ---
+$tasksByStatus = getTasksByStatus($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -68,14 +42,14 @@ foreach ($allTasks as $task) {
 
         <!-- Tableau des tâches -->
         <div class="board">
-            <?php foreach (['todo' => 'À Faire', 'in_progress' => 'En Cours', 'done' => 'Terminé'] as $status => $label): ?>
+            <?php foreach (getStatusLabels() as $status => $label): ?>
             <div class="column">
                 <h2 class="column-header"><?= $label ?></h2>
                 <div class="task-list">
                     <?php foreach ($tasksByStatus[$status] as $task): ?>
                     <div class="task" data-task-id="<?= $task['id'] ?>">
                         <div class="task-header">
-                            <h3 class="task-title"><?= htmlspecialchars($task['title']) ?></h3>
+                            <h3 class="task-title"><?= h($task['title']) ?></h3>
                             <div class="task-actions">
                                 <?php if (isManager() || $task['created_by'] === $userId || $task['assigned_to'] === $userId): ?>
                                     <button onclick="editTask(<?= $task['id'] ?>)" title="Modifier">✏️</button>
@@ -86,17 +60,17 @@ foreach ($allTasks as $task) {
                             </div>
                         </div>
                         <?php if (!empty($task['description'])): ?>
-                        <p class="task-description"><?= htmlspecialchars($task['description']) ?></p>
+                        <p class="task-description"><?= h($task['description']) ?></p>
                         <?php endif; ?>
                         <div class="task-footer">
                             <?php if ($task['due_date']): ?>
-                            <span class="task-due">📅 <?= date('d/m/Y H:i', strtotime($task['due_date'])) ?></span>
+                            <span class="task-due">📅 <?= formatDate($task['due_date']) ?></span>
                             <?php endif; ?>
                             <?php if ($task['assigned_username']): ?>
-                            <span class="task-assignee">👤 Assigné à: <?= htmlspecialchars($task['assigned_username']) ?></span>
+                            <span class="task-assignee">👤 Assigné à: <?= h($task['assigned_username']) ?></span>
                             <?php endif; ?>
                             <?php if (isset($task['creator_username'])): ?>
-                            <span class="task-creator">📝 Créé par: <?= htmlspecialchars($task['creator_username']) ?></span>
+                            <span class="task-creator">📝 Créé par: <?= h($task['creator_username']) ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -157,6 +131,7 @@ foreach ($allTasks as $task) {
 
     <!-- JS externe -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="assets/js/common.js"></script>
 
     <script>
     // État global
@@ -165,29 +140,37 @@ foreach ($allTasks as $task) {
     // Initialisation
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            const usersResponse = await axios.get('../src/actions/get_users.php');
-            if (usersResponse.data.success) {
-                users = usersResponse.data.data;
-                updateAssignSelect();
-            }
+            await loadUsers();
         } catch (error) {
             console.error('Erreur initialisation:', error);
         }
     });
 
+    // Fonctions utilitaires
+    async function loadUsers() {
+        const response = await axios.get(API_PATHS.GET_USERS);
+        if (response.data.success) {
+            users = response.data.data;
+            updateAssignSelect();
+        }
+        return users;
+    }
+
     function updateAssignSelect() {
         const select = document.getElementById('assignedToSelect');
         if (!select) return;
+
         select.innerHTML = `<option value="">Personne</option>` +
             users.map(user => `<option value="${user.id}">${user.username}</option>`).join('');
     }
 
+    // Gestion des formulaires
     function showTaskForm() {
-        document.getElementById('taskForm').style.display = 'flex';
+        toggleModal('taskForm', true);
     }
 
     function hideTaskForm() {
-        document.getElementById('taskForm').style.display = 'none';
+        toggleModal('taskForm', false);
     }
 
     document.getElementById('newTaskForm').addEventListener('submit', async (e) => {
@@ -201,49 +184,42 @@ foreach ($allTasks as $task) {
         };
 
         try {
-            const response = await axios.post('../src/actions/task_action.php', formData);
+            const response = await axios.post(API_PATHS.CREATE_TASK, formData);
             if (response.data.success) {
                 window.location.reload();
             } else {
                 alert('Erreur: ' + (response.data.error || 'Inconnue'));
             }
         } catch (error) {
-            alert('Erreur réseau: ' + error.message);
+            handleApiError(error, 'Erreur lors de la création de la tâche');
         }
     });
 
+    // Gestion des tâches
     async function deleteTask(taskId) {
-    if (!confirm('Supprimer cette tâche définitivement ?')) return;
-    try {
-        const response = await axios.post('../src/actions/delete_task.php', { task_id: taskId });
-        if (response.data.success) {
-            window.location.reload();
-        } else {
-            alert('Erreur: ' + (response.data.error || 'Suppression échouée'));
-            // Si c'est une erreur de permission, on peut rafraîchir la page
-            if (response.data.error && (response.data.error.includes('accès non autorisé') || response.data.error.includes('Permission refusée'))) {
+        if (!confirm('Supprimer cette tâche définitivement ?')) return;
+
+        try {
+            const response = await axios.post(API_PATHS.DELETE_TASK, { task_id: taskId });
+            if (response.data.success) {
                 window.location.reload();
+            } else {
+                handleApiError({ response: { data: response.data } }, 'Suppression échouée');
             }
+        } catch (error) {
+            handleApiError(error, 'Erreur lors de la suppression');
         }
-    } catch (error) {
-        const errorMsg = error.response?.data?.error || error.message;
-        alert('Erreur suppression: ' + errorMsg);
     }
-}
 
     async function editTask(taskId) {
         try {
-            const response = await axios.get(`../src/actions/get_task.php?id=${taskId}`);
+            const response = await axios.get(`${API_PATHS.GET_TASK}?id=${taskId}`);
             if (!response.data.success) {
                 throw new Error(response.data.error);
             }
             showEditForm(response.data.data);
         } catch (error) {
-            alert('Erreur: ' + error.message);
-            // Si c'est une erreur de permission, on peut rafraîchir la page
-            if (error.message.includes('accès non autorisé') || error.message.includes('Permission refusée')) {
-                window.location.reload();
-            }
+            handleApiError(error, 'Impossible de récupérer les détails de la tâche');
         }
     }
 
@@ -251,7 +227,7 @@ foreach ($allTasks as $task) {
         // Vérifier si l'utilisateur est un collaborateur
         const isCollaborator = <?= isCollaborator() ? 'true' : 'false' ?>;
         const currentUserId = <?= getLoggedInUserId() ?>;
-        const currentUsername = '<?= htmlspecialchars($_SESSION['username'] ?? 'Vous-même') ?>';
+        const currentUsername = '<?= h($_SESSION['username'] ?? 'Vous-même') ?>';
 
         const formHTML = `
         <div class="modal-overlay" id="editModal">
@@ -271,9 +247,9 @@ foreach ($allTasks as $task) {
                     <div class="form-group">
                         <label for="edit-task-status">Statut:</label>
                         <select id="edit-task-status" name="status">
-                            <option value="todo" ${task.status === 'todo' ? 'selected' : ''}>À faire</option>
-                            <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>En cours</option>
-                            <option value="done" ${task.status === 'done' ? 'selected' : ''}>Terminé</option>
+                            ${Object.entries(STATUS_LABELS).map(([value, label]) =>
+                                `<option value="${value}" ${task.status === value ? 'selected' : ''}>${label}</option>`
+                            ).join('')}
                         </select>
                     </div>
                     <div class="form-group">
@@ -308,33 +284,34 @@ foreach ($allTasks as $task) {
         </div>
         `;
         document.body.insertAdjacentHTML('beforeend', formHTML);
-        document.getElementById('editForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        document.getElementById('editForm').addEventListener('submit', submitEditForm);
+    }
 
-            // Réutiliser les mêmes variables que dans la fonction parente
-            // pour éviter les erreurs de variables non définies
+    async function submitEditForm(e) {
+        e.preventDefault();
 
-            const formData = {
-                id: e.target.id.value,
-                title: e.target.title.value,
-                description: e.target.description.value,
-                status: e.target.status.value,
-                assigned_to: e.target.assigned_to.value || null,
-                due_date: e.target.due_date.value
-            };
-            try {
-                const response = await axios.post('../src/actions/edit_task.php', formData, {
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (response.data.success) {
-                    window.location.reload();
-                } else {
-                    alert('Erreur : ' + (response.data.error || 'Modification échouée'));
-                }
-            } catch (error) {
-                alert('Erreur réseau : ' + error.message);
+        const formData = {
+            id: e.target.id.value,
+            title: e.target.title.value,
+            description: e.target.description.value,
+            status: e.target.status.value,
+            assigned_to: e.target.assigned_to.value || null,
+            due_date: e.target.due_date.value
+        };
+
+        try {
+            const response = await axios.post(API_PATHS.EDIT_TASK, formData, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.data.success) {
+                window.location.reload();
+            } else {
+                handleApiError({ response: { data: response.data } }, 'Modification échouée');
             }
-        });
+        } catch (error) {
+            handleApiError(error, 'Erreur lors de la modification');
+        }
     }
 
     function closeEditForm() {
