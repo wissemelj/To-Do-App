@@ -53,36 +53,29 @@
 body {
     font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
     margin: 0;
-    padding: 10px;
+    padding: 15px;
     background: var(--bg-gradient);
     color: var(--text-dark);
-    line-height: 1.4;
+    line-height: 1.5;
     min-height: 100vh;
-    font-size: 0.85rem;
 }
 
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 8px;
+    padding: 0 15px;
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
     line-height: 1.2;
     color: var(--text-dark);
 }
 
-h1 { font-size: 1.5rem; }
-h2 { font-size: 1.3rem; }
-h3 { font-size: 1.1rem; }
-h4, h5, h6 { font-size: 0.9rem; }
-
 p {
-    margin-bottom: 0.8rem;
-    font-size: 0.85rem;
+    margin-bottom: 1rem;
 }
 
 a {
@@ -101,11 +94,11 @@ header, .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
     background: rgba(255, 255, 255, 0.95);
-    border-radius: var(--border-radius-sm);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
     backdrop-filter: blur(10px);
 }
 
@@ -115,19 +108,19 @@ header, .dashboard-header {
 }
 
 .header-title {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     color: var(--text-dark);
     margin: 0;
     font-weight: 700;
 }
 
 .user-role {
-    margin-left: 8px;
-    padding: 3px 8px;
+    margin-left: 12px;
+    padding: 4px 10px;
     background: var(--bg-gradient);
     color: var(--text-white);
-    border-radius: 10px;
-    font-size: 0.7rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
     font-weight: 600;
     box-shadow: var(--shadow-sm);
 }
@@ -135,7 +128,7 @@ header, .dashboard-header {
 /* Buttons */
 .btn, .btn-primary, .btn-secondary, .btn-danger {
     display: inline-block;
-    padding: 6px 12px;
+    padding: 8px 16px;
     border: none;
     border-radius: var(--border-radius-sm);
     font-weight: 600;
@@ -143,7 +136,7 @@ header, .dashboard-header {
     text-align: center;
     text-decoration: none;
     transition: all var(--transition-normal);
-    font-size: 0.75rem;
+    font-size: 0.85rem;
 }
 
 .btn-primary {
@@ -186,24 +179,24 @@ header, .dashboard-header {
 .board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 25px;
 }
 
 .column {
     background: rgba(255, 255, 255, 0.95);
-    padding: 10px;
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-sm);
+    padding: 20px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
     backdrop-filter: blur(10px);
-    min-height: 65vh;
+    min-height: 70vh;
 }
 
 .column-header {
     color: var(--text-dark);
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    font-size: 1rem;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+    font-size: 1.3rem;
     font-weight: 700;
     position: relative;
 }
@@ -211,10 +204,10 @@ header, .dashboard-header {
 .column-header::after {
     content: '';
     position: absolute;
-    bottom: -1px;
+    bottom: -2px;
     left: 0;
-    width: 40px;
-    height: 1px;
+    width: 50px;
+    height: 2px;
 }
 
 .column:nth-child(1) .column-header::after {
@@ -236,12 +229,12 @@ header, .dashboard-header {
 /* Task Cards */
 .task {
     background: var(--bg-white);
-    padding: 8px;
-    margin-bottom: 8px;
-    border-radius: var(--border-radius-sm);
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
-    border-left: 2px solid transparent;
+    border-left: 3px solid transparent;
     position: relative;
     overflow: hidden;
 }
@@ -268,23 +261,23 @@ header, .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
 }
 
 .task-title {
     color: var(--text-dark);
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.3;
     flex: 1;
 }
 
 .task-description {
     color: var(--text-medium);
-    font-size: 0.75rem;
-    margin-bottom: 8px;
-    line-height: 1.3;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    line-height: 1.4;
 }
 
 .task-actions {
@@ -297,10 +290,10 @@ header, .dashboard-header {
     border: none;
     color: var(--text-light);
     cursor: pointer;
-    margin-left: 6px;
+    margin-left: 8px;
     transition: all var(--transition-fast);
-    font-size: 0.9rem;
-    padding: 3px;
+    font-size: 1rem;
+    padding: 4px;
     border-radius: 50%;
 }
 
@@ -312,9 +305,9 @@ header, .dashboard-header {
 .task-footer {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 6px;
-    font-size: 0.65rem;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.75rem;
 }
 
 .task-due, .task-assignee, .task-creator {
@@ -322,8 +315,8 @@ header, .dashboard-header {
     align-items: center;
     color: var(--text-light);
     background-color: var(--bg-light);
-    padding: 2px 6px;
-    border-radius: 8px;
+    padding: 3px 8px;
+    border-radius: 12px;
 }
 
 .task-due span, .task-assignee span, .task-creator span {
@@ -351,12 +344,12 @@ header, .dashboard-header {
 
 .modal-content, .edit-form {
     background: var(--bg-white);
-    padding: 12px;
-    border-radius: var(--border-radius-sm);
-    width: 450px;
+    padding: 20px;
+    border-radius: var(--border-radius-md);
+    width: 500px;
     max-width: 90%;
-    box-shadow: var(--shadow-md);
-    animation: slideIn 0.3s ease-out;
+    box-shadow: var(--shadow-lg);
+    animation: slideIn 0.4s ease-out;
     position: relative;
     margin: auto; /* Ensure it's centered */
 }
@@ -368,27 +361,27 @@ header, .dashboard-header {
 
 .modal-content h3 {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     color: var(--text-dark);
-    font-size: 1rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    border-bottom: 1px solid var(--bg-light);
-    padding-bottom: 6px;
+    border-bottom: 2px solid var(--bg-light);
+    padding-bottom: 10px;
 }
 
 .modal-close {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 12px;
+    right: 12px;
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     line-height: 1;
     cursor: pointer;
     color: var(--text-light);
     transition: color var(--transition-fast);
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -403,25 +396,25 @@ header, .dashboard-header {
 
 /* Form Styles */
 .form-group {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
     font-weight: 600;
     color: var(--text-dark);
-    font-size: 0.75rem;
+    font-size: 0.85rem;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
     width: 100%;
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     transition: all var(--transition-fast);
     background-color: var(--bg-light);
     color: var(--text-dark);
@@ -436,38 +429,38 @@ header, .dashboard-header {
 }
 
 .form-group textarea {
-    min-height: 60px;
+    min-height: 80px;
     resize: vertical;
 }
 
 .form-group select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 12px;
-    padding-right: 30px;
+    background-position: right 15px center;
+    background-size: 16px;
+    padding-right: 40px;
 }
 
 .form-buttons {
-    margin-top: 15px;
+    margin-top: 20px;
     display: flex;
-    gap: 8px;
+    gap: 10px;
     justify-content: flex-end;
 }
 
 .form-buttons button {
-    min-width: 70px;
+    min-width: 80px;
 }
 
 .btn-secondary {
     background-color: var(--bg-light);
     color: var(--text-medium);
     border: 1px solid var(--border-color);
-    padding: 6px 12px;
+    padding: 8px 16px;
     border-radius: var(--border-radius-sm);
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all var(--transition-normal);
 }
@@ -498,9 +491,9 @@ header, .dashboard-header {
 /* Status Badges */
 .status-badge {
     display: inline-block;
-    padding: 2px 6px;
-    border-radius: 8px;
-    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
     font-weight: 600;
     text-align: center;
 }
