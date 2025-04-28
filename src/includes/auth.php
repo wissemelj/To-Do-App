@@ -1,47 +1,35 @@
 <?php
-/**
- * Authentication and authorization functions
- * Handles user sessions, login/logout, and permission checks
- */
+// Ce fichier contient toutes les fonctions liées à l'authentification et aux permissions
+// Il gère les sessions utilisateur, la connexion/déconnexion, et les vérifications de permissions
+
+// Inclure les fichiers nécessaires
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/database.php';
 
-// Start session if not already started
+// Démarrer la session si elle n'est pas déjà démarrée
 if (session_status() === PHP_SESSION_NONE) {
-    // Set secure session parameters
-    ini_set('session.use_strict_mode', 1);
-    ini_set('session.cookie_httponly', 1);
-
-    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
-        ini_set('session.cookie_secure', 1);
-    }
-
+    // Paramètres de base pour la sécurité des sessions
+    ini_set('session.cookie_httponly', 1); // Empêche l'accès aux cookies via JavaScript
     session_start();
 }
 
-/**
- * Check if a user is currently logged in
- * @return bool True if user is logged in, false otherwise
- */
+// Vérifie si un utilisateur est connecté
 function isLoggedIn(): bool {
+    // Si l'ID utilisateur existe dans la session, l'utilisateur est connecté
     return isset($_SESSION['user_id']);
 }
 
-/**
- * Log in a user by ID and store their role in session
- * @param int $userId The user ID to log in
- * @return void
- */
+// Connecte un utilisateur et stocke ses informations dans la session
 function loginUser(int $userId): void {
     global $pdo;
 
-    // Store user ID in session
+    // Stocker l'ID utilisateur dans la session
     $_SESSION['user_id'] = $userId;
 
-    // Regenerate session ID to prevent session fixation
+    // Régénérer l'ID de session pour plus de sécurité
     session_regenerate_id(true);
 
-    // Get and store user role in session
+    // Récupérer et stocker le rôle et le nom d'utilisateur
     $stmt = $pdo->prepare("SELECT role, username FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
@@ -52,124 +40,69 @@ function loginUser(int $userId): void {
     }
 }
 
-/**
- * Log out the current user
- * @return void
- */
+// Déconnecte l'utilisateur actuel
 function logoutUser(): void {
-    // Clear all session data
+    // Vider toutes les données de session
     $_SESSION = [];
 
-    // Clear session cookie
-    if (ini_get("session.use_cookies")) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
-    }
-
-    // Destroy the session
+    // Détruire la session
     session_destroy();
 }
 
-/**
- * Get the ID of the currently logged in user
- * @return int|null User ID or null if not logged in
- */
+// Récupère l'ID de l'utilisateur connecté
 function getLoggedInUserId(): ?int {
+    // Retourne l'ID utilisateur s'il existe, sinon null
     return $_SESSION['user_id'] ?? null;
 }
 
-/**
- * Get the role of the currently logged in user
- * @return string|null User role or null if not set
- */
+// Récupère le rôle de l'utilisateur connecté
 function getUserRole(): ?string {
+    // Retourne le rôle utilisateur s'il existe, sinon null
     return $_SESSION['user_role'] ?? null;
 }
 
-/**
- * Check if the current user is a manager
- * @return bool True if user is a manager, false otherwise
- */
+// Vérifie si l'utilisateur est un manager
 function isManager(): bool {
     return getUserRole() === 'manager';
 }
 
-/**
- * Check if the current user is a collaborator
- * @return bool True if user is a collaborator, false otherwise
- */
+// Vérifie si l'utilisateur est un collaborateur
 function isCollaborator(): bool {
     return getUserRole() === 'collaborator';
 }
 
-/**
- * Check if the current user can modify a specific task
- * @param int $taskId The task ID to check
- * @return bool True if user can modify the task, false otherwise
- */
+// Vérifie si l'utilisateur peut modifier une tâche spécifique
 function canModifyTask(int $taskId): bool {
     global $pdo;
     $userId = getLoggedInUserId();
 
-    // Managers can modify any task
+    // Les managers peuvent modifier n'importe quelle tâche
     if (isManager()) {
         return true;
     }
 
-    // Cache task permissions to avoid repeated database queries
-    static $taskPermissionsCache = [];
-
-    if (isset($taskPermissionsCache[$taskId])) {
-        return $taskPermissionsCache[$taskId];
-    }
-
-    // Collaborators can modify tasks they created OR tasks assigned to them
+    // Les collaborateurs peuvent modifier les tâches qu'ils ont créées OU qui leur sont assignées
     $stmt = $pdo->prepare("SELECT created_by, assigned_to FROM tasks WHERE id = ?");
     $stmt->execute([$taskId]);
     $task = $stmt->fetch();
 
-    $canModify = $task && ($task['created_by'] === $userId || $task['assigned_to'] === $userId);
-
-    // Cache the result
-    $taskPermissionsCache[$taskId] = $canModify;
-
-    return $canModify;
+    // Retourne vrai si la tâche existe et si l'utilisateur l'a créée ou si elle lui est assignée
+    return $task && ($task['created_by'] === $userId || $task['assigned_to'] === $userId);
 }
 
-/**
- * Check if the current user can view a specific task
- * @param int $taskId The task ID to check
- * @return bool True if user can view the task, false otherwise
- */
+// Vérifie si l'utilisateur peut voir une tâche spécifique
 function canViewTask(int $taskId): bool {
     global $pdo;
 
-    // Cache task existence to avoid repeated database queries
-    static $taskExistsCache = [];
-
-    if (isset($taskExistsCache[$taskId])) {
-        return $taskExistsCache[$taskId];
-    }
-
-    // Both managers and collaborators can view any task
+    // Les managers et les collaborateurs peuvent voir n'importe quelle tâche
+    // On vérifie juste si la tâche existe
     $stmt = $pdo->prepare("SELECT id FROM tasks WHERE id = ?");
     $stmt->execute([$taskId]);
 
-    $exists = (bool) $stmt->fetch();
-
-    // Cache the result
-    $taskExistsCache[$taskId] = $exists;
-
-    return $exists;
+    return (bool) $stmt->fetch();
 }
 
-/**
- * Require the user to be logged in, redirect to login page if not
- * @return void
- */
+// Exige que l'utilisateur soit connecté, sinon redirige vers la page de connexion
 function requireLogin(): void {
     if (!isLoggedIn()) {
         header("Location: " . SITE_URL . "/login.php");
