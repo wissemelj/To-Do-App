@@ -1,11 +1,19 @@
 <?php
-require_once '../src/includes/auth.php';
-require_once '../src/includes/database.php';
-require_once '../src/includes/utils.php';
+// Inclusion des fichiers nécessaires
+require_once '../src/includes/auth.php';    // Fonctions d'authentification
+require_once '../src/includes/database.php'; // Connexion à la base de données
+require_once '../src/includes/utils.php';    // Fonctions utilitaires
 
+// Vérifier que l'utilisateur est connecté (sinon redirection vers login.php)
 requireLogin();
+
+// Récupérer l'ID de l'utilisateur connecté
 $userId = getLoggedInUserId();
+
+// S'assurer que le nom d'utilisateur est dans la session
 ensureUsernameInSession($pdo, $userId);
+
+// Récupérer toutes les tâches et les organiser par statut (todo, in_progress, done)
 $tasksByStatus = getTasksByStatus($pdo);
 ?>
 <!DOCTYPE html>
@@ -115,16 +123,22 @@ $tasksByStatus = getTasksByStatus($pdo);
         </div>
     </div>
 
+    <!-- Bibliothèques JavaScript externes -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Nos fonctions JavaScript communes -->
     <script src="assets/js/common.js"></script>
 
     <script>
+    // Variable globale pour stocker la liste des utilisateurs
     let users = [];
 
+    // Quand la page est chargée, on récupère la liste des utilisateurs
     document.addEventListener('DOMContentLoaded', async () => {
         try {
+            // Appel à l'API pour récupérer les utilisateurs
             const response = await axios.get(API_PATHS.GET_USERS);
             if (response.data.success) {
+                // Stockage des utilisateurs dans la variable globale
                 users = response.data.data;
             }
         } catch (error) {
@@ -132,67 +146,96 @@ $tasksByStatus = getTasksByStatus($pdo);
         }
     });
 
+    // Fonction pour afficher le formulaire de création de tâche
     function showTaskForm() {
         toggleModal('taskForm', true);
     }
 
+    // Fonction pour masquer le formulaire de création de tâche
     function hideTaskForm() {
         toggleModal('taskForm', false);
     }
 
+    // Gestionnaire d'événement pour la soumission du formulaire de création de tâche
     document.getElementById('newTaskForm').addEventListener('submit', async (e) => {
+        // Empêcher le comportement par défaut du formulaire (rechargement de la page)
         e.preventDefault();
+
+        // Récupérer les données du formulaire
         const formData = {
-            title: e.target.title.value,
-            description: e.target.description.value,
-            assigned_to: e.target.assigned_to.value || null,
-            due_date: e.target.due_date.value
+            title: e.target.title.value,                    // Titre de la tâche
+            description: e.target.description.value,        // Description de la tâche
+            assigned_to: e.target.assigned_to.value || null, // Utilisateur assigné (ou null si non assigné)
+            due_date: e.target.due_date.value               // Date limite
         };
 
         try {
+            // Envoyer les données au serveur
             const response = await axios.post(API_PATHS.CREATE_TASK, formData);
+
             if (response.data.success) {
+                // Si la création a réussi, recharger la page pour afficher la nouvelle tâche
                 window.location.reload();
             } else {
+                // Si la création a échoué, afficher l'erreur
                 alert('Erreur: ' + (response.data.error || 'Inconnue'));
             }
         } catch (error) {
+            // En cas d'erreur réseau ou autre, utiliser notre fonction de gestion d'erreur
             handleApiError(error, 'Erreur lors de la création de la tâche');
         }
     });
 
+    // Fonction pour supprimer une tâche
     async function deleteTask(taskId) {
+        // Demander confirmation avant de supprimer
         if (!confirm('Supprimer cette tâche définitivement ?')) return;
 
         try {
+            // Envoyer la demande de suppression au serveur
             const response = await axios.post(API_PATHS.DELETE_TASK, { task_id: taskId });
+
             if (response.data.success) {
+                // Si la suppression a réussi, recharger la page
                 window.location.reload();
             } else {
+                // Si la suppression a échoué, afficher l'erreur
                 handleApiError({ response: { data: response.data } }, 'Suppression échouée');
             }
         } catch (error) {
+            // En cas d'erreur réseau ou autre
             handleApiError(error, 'Erreur lors de la suppression');
         }
     }
 
+    // Fonction pour éditer une tâche existante
     async function editTask(taskId) {
         try {
+            // Récupérer les détails de la tâche depuis le serveur
             const response = await axios.get(`${API_PATHS.GET_TASK}?id=${taskId}`);
+
             if (!response.data.success) {
+                // Si la récupération a échoué, lancer une erreur
                 throw new Error(response.data.error);
             }
+
+            // Afficher le formulaire d'édition avec les données de la tâche
             showEditForm(response.data.data);
         } catch (error) {
+            // En cas d'erreur
             handleApiError(error, 'Impossible de récupérer les détails de la tâche');
         }
     }
 
+    // Fonction pour afficher le formulaire d'édition d'une tâche
     function showEditForm(task) {
-        const isCollaborator = <?= isCollaborator() ? 'true' : 'false' ?>;
-        const currentUserId = <?= getLoggedInUserId() ?>;
-        const currentUsername = '<?= h($_SESSION['username'] ?? 'Vous-même') ?>';
+        // Récupérer des informations sur l'utilisateur actuel
+        const isCollaborator = <?= isCollaborator() ? 'true' : 'false' ?>; // Est-ce un collaborateur?
+        const currentUserId = <?= getLoggedInUserId() ?>;                  // ID de l'utilisateur
+        const currentUsername = '<?= h($_SESSION['username'] ?? 'Vous-même') ?>'; // Nom d'utilisateur
 
+        // Préparer les options pour le champ "Assigné à"
+        // Les collaborateurs ne peuvent assigner des tâches qu'à eux-mêmes
         const assigneeOptions = isCollaborator
             ? `<input type="hidden" name="assigned_to" value="${currentUserId}">
                <select id="edit-task-assigned" disabled>
@@ -204,21 +247,29 @@ $tasksByStatus = getTasksByStatus($pdo);
                  ${users.map(user => `<option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>${user.username}</option>`).join('')}
                </select>`;
 
+        // Créer le HTML du formulaire d'édition
         const formHTML = `
         <div class="modal-overlay" id="editModal">
             <div class="modal-content">
                 <h3>Modifier la tâche</h3>
                 <button type="button" class="modal-close" onclick="closeEditForm()">&times;</button>
                 <form id="editForm">
+                    <!-- ID de la tâche (caché) -->
                     <input type="hidden" name="id" value="${task.id}">
+
+                    <!-- Titre de la tâche -->
                     <div class="form-group">
                         <label for="edit-task-title">Titre:</label>
                         <input type="text" id="edit-task-title" name="title" value="${task.title}" required>
                     </div>
+
+                    <!-- Description de la tâche -->
                     <div class="form-group">
                         <label for="edit-task-description">Description:</label>
                         <textarea id="edit-task-description" name="description">${task.description || ''}</textarea>
                     </div>
+
+                    <!-- Statut de la tâche -->
                     <div class="form-group">
                         <label for="edit-task-status">Statut:</label>
                         <select id="edit-task-status" name="status">
@@ -227,14 +278,20 @@ $tasksByStatus = getTasksByStatus($pdo);
                             ).join('')}
                         </select>
                     </div>
+
+                    <!-- Assignation de la tâche -->
                     <div class="form-group">
                         <label for="edit-task-assigned">Assigné à:</label>
                         ${assigneeOptions}
                     </div>
+
+                    <!-- Date limite de la tâche -->
                     <div class="form-group">
                         <label for="edit-task-due-date">Date limite:</label>
                         <input type="datetime-local" id="edit-task-due-date" name="due_date" value="${task.due_date ? task.due_date.slice(0, 16) : ''}">
                     </div>
+
+                    <!-- Boutons d'action -->
                     <div class="form-buttons">
                         <button type="submit" class="btn-primary">Enregistrer</button>
                         <button type="button" class="btn-secondary" onclick="closeEditForm()">Annuler</button>
@@ -243,37 +300,50 @@ $tasksByStatus = getTasksByStatus($pdo);
             </div>
         </div>`;
 
+        // Ajouter le formulaire à la page
         document.body.insertAdjacentHTML('beforeend', formHTML);
+
+        // Ajouter un gestionnaire d'événement pour la soumission du formulaire
         document.getElementById('editForm').addEventListener('submit', submitEditForm);
     }
 
+    // Fonction pour soumettre le formulaire d'édition
     async function submitEditForm(e) {
+        // Empêcher le comportement par défaut du formulaire
         e.preventDefault();
+
+        // Récupérer les données du formulaire
         const formData = {
-            id: e.target.id.value,
-            title: e.target.title.value,
-            description: e.target.description.value,
-            status: e.target.status.value,
-            assigned_to: e.target.assigned_to.value || null,
-            due_date: e.target.due_date.value
+            id: e.target.id.value,                      // ID de la tâche
+            title: e.target.title.value,                // Titre
+            description: e.target.description.value,    // Description
+            status: e.target.status.value,              // Statut (todo, in_progress, done)
+            assigned_to: e.target.assigned_to.value || null, // Utilisateur assigné
+            due_date: e.target.due_date.value           // Date limite
         };
 
         try {
+            // Envoyer les données au serveur
             const response = await axios.post(API_PATHS.EDIT_TASK, formData, {
                 headers: { 'Content-Type': 'application/json' }
             });
 
             if (response.data.success) {
+                // Si la modification a réussi, recharger la page
                 window.location.reload();
             } else {
+                // Si la modification a échoué, afficher l'erreur
                 handleApiError({ response: { data: response.data } }, 'Modification échouée');
             }
         } catch (error) {
+            // En cas d'erreur réseau ou autre
             handleApiError(error, 'Erreur lors de la modification');
         }
     }
 
+    // Fonction pour fermer le formulaire d'édition
     function closeEditForm() {
+        // Supprimer la modale du DOM
         document.getElementById('editModal').remove();
     }
     </script>
