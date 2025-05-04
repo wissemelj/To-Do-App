@@ -1,73 +1,107 @@
 # Application de Gestion de Tâches (To-Do App)
 
-Une application simple de gestion de tâches avec authentification et contrôle d'accès basé sur les rôles.
+Une application web simple et intuitive pour la gestion de tâches, conçue pour les équipes avec différents niveaux d'accès.
+
+## Fonctionnalités
+
+- **Gestion des tâches** : Créer, modifier, supprimer et visualiser des tâches
+- **Tableau Kanban** : Visualiser les tâches par statut (À faire, En cours, Terminé)
+- **Vue Calendrier** : Visualiser les tâches sur un calendrier
+- **Système d'authentification** : Inscription et connexion des utilisateurs
+- **Contrôle d'accès basé sur les rôles** : Managers et Collaborateurs avec différentes permissions
 
 ## Structure du Projet
 
 ```
 To-Do-App/
-│
-├── database/                  # Scripts SQL pour la base de données
-│
-├── public/                    # Fichiers accessibles publiquement
-│   ├── assets/                # Ressources statiques
-│   │   ├── css/               # Fichiers CSS
-│   │   ├── js/                # Fichiers JavaScript
-│   │   └── img/               # Images
-│   │
-│   ├── index.php              # Page principale (tableau de bord)
-│   ├── calendar.php           # Vue calendrier
-│   ├── login.php              # Page de connexion
-│   ├── register.php           # Page d'inscription
-│   └── logout.php             # Script de déconnexion
-│
-└── src/                       # Code source PHP
-    ├── actions/               # Scripts de traitement des actions
-    │   ├── login_action.php   # Traitement de la connexion
-    │   ├── register_action.php # Traitement de l'inscription
-    │   ├── task_action.php    # Création de tâche
-    │   ├── edit_task.php      # Modification de tâche
-    │   ├── delete_task.php    # Suppression de tâche
-    │   ├── get_task.php       # Récupération des détails d'une tâche
-    │   ├── get_users.php      # Récupération de la liste des utilisateurs
-    │   └── ...
-    │
-    └── includes/              # Fichiers inclus dans plusieurs pages
-        ├── auth.php           # Fonctions d'authentification
-        ├── config.php         # Configuration de l'application
-        ├── database.php       # Connexion à la base de données
-        └── utils.php          # Fonctions utilitaires
+├── database/
+│   └── init.sql                # Script d'initialisation de la base de données
+├── public/
+│   ├── assets/
+│   │   ├── css/                # Fichiers CSS
+│   │   └── js/                 # Fichiers JavaScript
+│   ├── calendar.php            # Page de calendrier
+│   ├── index.php               # Page principale (tableau Kanban)
+│   ├── login.php               # Page de connexion
+│   ├── logout.php              # Script de déconnexion
+│   ├── register.php            # Page d'inscription
+│   └── task.php                # Page de détail d'une tâche
+└── src/
+    ├── actions/                # Scripts d'action (API)
+    ├── classes/                # Classes PHP
+    └── includes/               # Fichiers inclus (configuration, etc.)
 ```
-
-## Fonctionnalités
-
-- **Authentification** : Connexion, inscription et déconnexion
-- **Gestion des tâches** : Création, modification et suppression de tâches
-- **Contrôle d'accès basé sur les rôles** :
-  - **Managers** : Accès complet à toutes les tâches
-  - **Collaborateurs** : Peuvent modifier les tâches qu'ils ont créées ou qui leur sont assignées
-- **Vue Tableau de bord** : Affichage des tâches par statut (À faire, En cours, Terminé)
-- **Vue Calendrier** : Affichage des tâches dans un calendrier
 
 ## Technologies Utilisées
 
-- **Frontend** : HTML, CSS, JavaScript, Axios (pour les requêtes AJAX)
-- **Backend** : PHP
+- **Backend** : PHP 7.4+
 - **Base de données** : MySQL
-- **Bibliothèques** : FullCalendar (pour la vue calendrier)
+- **Frontend** : HTML, CSS, JavaScript
+- **Bibliothèques** : Axios (AJAX), FullCalendar (calendrier)
 
 ## Installation
 
-1. Clonez ce dépôt dans le répertoire `htdocs` de XAMPP
-2. Importez le fichier SQL dans la base de données MySQL
-3. Configurez les paramètres de connexion à la base de données dans `src/includes/config.php`
-4. Accédez à l'application via `http://localhost/To-Do-App/public/`
+1. Clonez ce dépôt dans votre répertoire web (par exemple, `htdocs` pour XAMPP)
+2. Créez une base de données MySQL nommée `task_manager`
+3. Importez le fichier `database/init.sql` pour créer les tables nécessaires
+4. Configurez les paramètres de connexion à la base de données dans `src/includes/config.php`
+5. Accédez à l'application via votre navigateur (par exemple, `http://localhost/To-Do-App/public/`)
 
-## Utilisateurs par défaut
+## Utilisation
 
-- **Manager** :
-  - Nom d'utilisateur : `admin`
-  - Mot de passe : `admin123`
-- **Collaborateur** :
-  - Nom d'utilisateur : `user`
-  - Mot de passe : `user123`
+### Inscription et Connexion
+
+1. Accédez à la page d'inscription pour créer un compte
+2. Connectez-vous avec vos identifiants
+
+### Gestion des Tâches
+
+- **Créer une tâche** : Cliquez sur "Nouvelle tâche" et remplissez le formulaire
+- **Modifier une tâche** : Cliquez sur l'icône de modification d'une tâche
+- **Supprimer une tâche** : Cliquez sur l'icône de suppression d'une tâche
+- **Changer le statut** : Modifiez une tâche et changez son statut
+
+### Vue Calendrier
+
+- Accédez à la page Calendrier pour visualiser les tâches par date
+- Cliquez sur une tâche dans le calendrier pour voir ses détails
+
+## Rôles et Permissions
+
+### Manager
+
+- Accès complet à toutes les tâches
+- Peut créer, modifier et supprimer n'importe quelle tâche
+- Peut assigner des tâches à n'importe quel utilisateur
+
+### Collaborateur
+
+- Peut créer des tâches pour lui-même
+- Peut modifier les tâches qu'il a créées ou qui lui sont assignées
+- Peut voir toutes les tâches dans la vue calendrier
+
+## Structure des Classes
+
+### User
+
+Gère l'authentification et les permissions des utilisateurs.
+
+### Task
+
+Gère les opérations CRUD (Création, Lecture, Mise à jour, Suppression) des tâches.
+
+### Database
+
+Gère la connexion à la base de données.
+
+### Utility
+
+Fournit des fonctions utilitaires pour l'application.
+
+## Développement
+
+Cette application est conçue pour être simple et facile à comprendre, avec une structure orientée objet. Elle est idéale pour les projets d'apprentissage et peut être étendue avec des fonctionnalités supplémentaires.
+
+## Licence
+
+Ce projet est disponible sous licence MIT. Voir le fichier LICENSE pour plus de détails.
