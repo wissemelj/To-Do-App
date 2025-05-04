@@ -1,20 +1,15 @@
 <?php
-// Inclusion des fichiers nécessaires
-require_once '../src/includes/auth.php';    // Fonctions d'authentification
-require_once '../src/includes/database.php'; // Connexion à la base de données
-require_once '../src/includes/utils.php';    // Fonctions utilitaires
+// Inclusion du fichier de configuration qui charge les classes et initialise les objets
+require_once '../src/includes/config.php';
 
 // Vérifier que l'utilisateur est connecté (sinon redirection vers login.php)
-requireLogin();
-
-// Récupérer l'ID de l'utilisateur connecté
-$userId = getLoggedInUserId();
+$userObj->requireLogin(SITE_URL . '/login.php');
 
 // S'assurer que le nom d'utilisateur est dans la session
-ensureUsernameInSession($pdo, $userId);
+$userObj->ensureUsernameInSession();
 
 // Récupérer toutes les tâches et les organiser par statut (todo, in_progress, done)
-$tasksByStatus = getTasksByStatus($pdo);
+$tasksByStatus = $taskObj->getTasksByStatus();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -30,7 +25,7 @@ $tasksByStatus = getTasksByStatus($pdo);
         <header class="dashboard-header">
             <div class="header-left">
                 <h1 class="header-title">Tâches</h1>
-                <span class="user-role"><?= isManager() ? 'Manager' : 'Collaborateur' ?></span>
+                <span class="user-role"><?= $userObj->isManager() ? 'Manager' : 'Collaborateur' ?></span>
             </div>
             <div>
                 <button class="btn-primary" onclick="showTaskForm()">+ Nouvelle tâche</button>
@@ -40,35 +35,35 @@ $tasksByStatus = getTasksByStatus($pdo);
         </header>
 
         <div class="board">
-            <?php foreach (getStatusLabels() as $status => $label): ?>
+            <?php foreach (Task::getStatusLabels() as $status => $label): ?>
             <div class="column">
                 <h2 class="column-header"><?= $label ?></h2>
                 <div class="task-list">
                     <?php foreach ($tasksByStatus[$status] as $task): ?>
                     <div class="task" data-task-id="<?= $task['id'] ?>">
                         <div class="task-header">
-                            <h3 class="task-title"><?= h($task['title']) ?></h3>
+                            <h3 class="task-title"><?= Utility::h($task['title']) ?></h3>
                             <div class="task-actions">
-                                <?php if (isManager() || $task['created_by'] === $userId || $task['assigned_to'] === $userId): ?>
+                                <?php if ($userObj->isManager() || $task['created_by'] === $userObj->getLoggedInUserId() || $task['assigned_to'] === $userObj->getLoggedInUserId()): ?>
                                     <button onclick="editTask(<?= $task['id'] ?>)" title="Modifier">✏️</button>
-                                    <?php if (isManager() || $task['created_by'] === $userId): ?>
+                                    <?php if ($userObj->isManager() || $task['created_by'] === $userObj->getLoggedInUserId()): ?>
                                         <button onclick="deleteTask(<?= $task['id'] ?>)" title="Supprimer">🗑️</button>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </div>
                         <?php if (!empty($task['description'])): ?>
-                        <p class="task-description"><?= h($task['description']) ?></p>
+                        <p class="task-description"><?= Utility::h($task['description']) ?></p>
                         <?php endif; ?>
                         <div class="task-footer">
                             <?php if ($task['due_date']): ?>
-                            <span class="task-due">📅 <?= formatDate($task['due_date']) ?></span>
+                            <span class="task-due">📅 <?= Utility::formatDate($task['due_date']) ?></span>
                             <?php endif; ?>
                             <?php if ($task['assigned_username']): ?>
-                            <span class="task-assignee">👤 <?= h($task['assigned_username']) ?></span>
+                            <span class="task-assignee">👤 <?= Utility::h($task['assigned_username']) ?></span>
                             <?php endif; ?>
                             <?php if (isset($task['creator_username'])): ?>
-                            <span class="task-creator">📝 <?= h($task['creator_username']) ?></span>
+                            <span class="task-creator">📝 <?= Utility::h($task['creator_username']) ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -93,19 +88,19 @@ $tasksByStatus = getTasksByStatus($pdo);
                     </div>
                     <div class="form-group">
                         <label for="task-assigned">Assigner à:</label>
-                        <?php if (isCollaborator()): ?>
-                            <input type="hidden" name="assigned_to" value="<?= getLoggedInUserId() ?>">
+                        <?php if ($userObj->isCollaborator()): ?>
+                            <input type="hidden" name="assigned_to" value="<?= $userObj->getLoggedInUserId() ?>">
                             <select id="task-assigned" disabled>
-                                <option value="<?= getLoggedInUserId() ?>"><?= h($_SESSION['username'] ?? 'Vous-même') ?></option>
+                                <option value="<?= $userObj->getLoggedInUserId() ?>"><?= Utility::h($_SESSION['username'] ?? 'Vous-même') ?></option>
                             </select>
                             <small class="form-hint">En tant que collaborateur, vous ne pouvez créer des tâches que pour vous-même.</small>
                         <?php else: ?>
                             <select id="task-assigned" name="assigned_to">
                                 <option value="">Personne</option>
                                 <?php
-                                $users = $pdo->query("SELECT id, username FROM users")->fetchAll();
+                                $users = $userObj->getAllUsers();
                                 foreach ($users as $user): ?>
-                                <option value="<?= $user['id'] ?>"><?= h($user['username']) ?></option>
+                                <option value="<?= $user['id'] ?>"><?= Utility::h($user['username']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         <?php endif; ?>
@@ -230,9 +225,9 @@ $tasksByStatus = getTasksByStatus($pdo);
     // Fonction pour afficher le formulaire d'édition d'une tâche
     function showEditForm(task) {
         // Récupérer des informations sur l'utilisateur actuel
-        const isCollaborator = <?= isCollaborator() ? 'true' : 'false' ?>; // Est-ce un collaborateur?
-        const currentUserId = <?= getLoggedInUserId() ?>;                  // ID de l'utilisateur
-        const currentUsername = '<?= h($_SESSION['username'] ?? 'Vous-même') ?>'; // Nom d'utilisateur
+        const isCollaborator = <?= $userObj->isCollaborator() ? 'true' : 'false' ?>; // Est-ce un collaborateur?
+        const currentUserId = <?= $userObj->getLoggedInUserId() ?>;                  // ID de l'utilisateur
+        const currentUsername = '<?= Utility::h($_SESSION['username'] ?? 'Vous-même') ?>'; // Nom d'utilisateur
 
         // Préparer les options pour le champ "Assigné à"
         // Les collaborateurs ne peuvent assigner des tâches qu'à eux-mêmes

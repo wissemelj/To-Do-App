@@ -1,11 +1,11 @@
 <?php
-require_once '../src/includes/auth.php';
-require_once '../src/includes/database.php';
-require_once '../src/includes/utils.php';
+require_once '../src/includes/config.php';
 
-requireLogin();
-$userId = getLoggedInUserId();
-ensureUsernameInSession($pdo, $userId);
+// Check if user is logged in
+$userObj->requireLogin(SITE_URL . '/login.php');
+
+// Ensure username is in session
+$userObj->ensureUsernameInSession();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -22,7 +22,7 @@ ensureUsernameInSession($pdo, $userId);
         <header class="dashboard-header">
             <div class="header-left">
                 <h1 class="header-title">Calendrier des Tâches</h1>
-                <span class="user-role"><?= isManager() ? 'Manager' : 'Collaborateur' ?></span>
+                <span class="user-role"><?= $userObj->isManager() ? 'Manager' : 'Collaborateur' ?></span>
             </div>
             <div>
                 <a href="index.php" class="btn-primary">Retour au tableau</a>
@@ -123,7 +123,9 @@ ensureUsernameInSession($pdo, $userId);
 
     async function showTaskDetails(taskId) {
         try {
-            const response = await axios.get(`${API_PATHS.GET_TASK_DETAILS}?id=${taskId}`);
+            const url = `${API_PATHS.GET_TASK_DETAILS}?id=${taskId}&mode=calendar`;
+            console.log('URL appelée:', url);
+            const response = await axios.get(url);
             if (!response.data.success) {
                 throw new Error(response.data.error || 'Erreur inconnue');
             }

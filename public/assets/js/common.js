@@ -19,10 +19,10 @@ const API_PATHS = {
     GET_USERS: '../src/actions/get_users.php',             // Récupérer la liste des utilisateurs
     CREATE_TASK: '../src/actions/task_action.php',         // Créer une nouvelle tâche
     DELETE_TASK: '../src/actions/delete_task.php',         // Supprimer une tâche
-    GET_TASK: '../src/actions/get_task.php',               // Récupérer les détails d'une tâche
+    GET_TASK: '../src/actions/get_task.php',               // Récupérer les détails d'une tâche pour l'édition
     EDIT_TASK: '../src/actions/edit_task.php',             // Modifier une tâche
     GET_CALENDAR_TASKS: '../src/actions/get_calendar_tasks.php', // Récupérer les tâches pour le calendrier
-    GET_TASK_DETAILS: '../src/actions/get_task_details.php'      // Récupérer les détails d'une tâche pour le calendrier
+    GET_TASK_DETAILS: '../src/actions/get_task.php'        // Récupérer les détails d'une tâche pour le calendrier
 };
 
 /**

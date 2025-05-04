@@ -1,9 +1,9 @@
 <?php
-require_once '../src/includes/auth.php';
+require_once '../src/includes/config.php';
 
-if (isLoggedIn()) {
-    header("Location: index.php");
-    exit();
+// Si l'utilisateur est déjà connecté, rediriger vers la page d'accueil
+if ($userObj->isLoggedIn()) {
+    Utility::redirect('index.php');
 }
 ?>
 <!DOCTYPE html>

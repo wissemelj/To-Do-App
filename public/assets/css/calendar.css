@@ -1,46 +1,4 @@
-:root {
-    /* Main color scheme */
-    --primary-color: #667eea;
-    --primary-dark: #5a6fd6;
-    --secondary-color: #764ba2;
-    --secondary-dark: #673d91;
-    --success-color: #38b2ac;
-    --warning-color: #f6ad55;
-    --danger-color: #e53e3e;
-    --danger-hover: #c53030;
-
-    /* Text colors */
-    --text-dark: #2d3748;
-    --text-medium: #4a5568;
-    --text-light: #718096;
-    --text-white: #ffffff;
-
-    /* Background colors */
-    --bg-white: #ffffff;
-    --bg-light: #f7fafc;
-    --bg-gray: #edf2f7;
-    --bg-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-
-    /* Border and shadow */
-    --border-color: #e2e8f0;
-    --border-radius-sm: 6px;
-    --border-radius-md: 10px;
-    --border-radius-lg: 15px;
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.15);
-
-    /* Status colors */
-    --status-todo: var(--primary-color);
-    --status-in-progress: var(--warning-color);
-    --status-done: var(--success-color);
-
-    /* Transitions */
-    --transition-fast: 0.2s;
-    --transition-normal: 0.3s;
-    --transition-slow: 0.5s;
-}
+@import 'variables.css';
 
 body {
     background: var(--bg-gradient);

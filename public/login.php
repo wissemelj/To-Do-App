@@ -1,9 +1,9 @@
 <?php
-require_once '../src/includes/auth.php';
+require_once '../src/includes/config.php';
 
-if (isLoggedIn()) {
-    header("Location: index.php");
-    exit();
+// If user is already logged in, redirect to index page
+if ($userObj->isLoggedIn()) {
+    Utility::redirect('index.php');
 }
 ?>
 <!DOCTYPE html>
@@ -46,14 +46,14 @@ if (isLoggedIn()) {
 
     <!-- Font Awesome pour les icônes -->
     <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
-    
+
     <!-- Script de gestion du formulaire -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            
+
             try {
                 const response = await axios.post(e.target.action, formData);
                 if (response.data.success) {
