@@ -1,0 +1,61 @@
+²# PHP project .gitignore file
+
+# XAMPP/PHP specific
+/vendor/
+composer.lock
+composer.phar
+.phpunit.result.cache
+.php_cs.cache
+.php-cs-fixer.cache
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env
+.env.backup
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.sqlite3
+/logs/
+
+# Uploaded files and user content
+/public/uploads/tasks/*
+!/public/uploads/tasks/.gitkeep
+
+# Cache and temporary files
+/cache/
+/tmp/
+/temp/
+*.tmp
+*.bak
+*.cache
+
+# Build and deployment files
+/build/
+/dist/
+/node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+package-lock.json
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

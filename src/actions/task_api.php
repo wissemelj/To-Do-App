@@ -61,11 +61,25 @@ function checkTaskModifiable(int $taskId, bool $checkExists = true, string $erro
         return ['success' => false, 'error' => 'Tâche introuvable'];
     }
 
+    // Récupère les détails de la tâche
+    $task = $taskObj->getTask($taskId);
+    if (!$task) {
+        return ['success' => false, 'error' => 'Tâche introuvable'];
+    }
+
+    // Vérifie si la tâche est terminée
+    if ($task['status'] === 'done') {
+        return [
+            'success' => false,
+            'error' => $errorPrefix . 'Les tâches terminées ne peuvent pas être modifiées'
+        ];
+    }
+
     // Vérifie si l'utilisateur a le droit de modifier cette tâche
     if (!$userObj->canModifyTask($taskId, $taskObj)) {
         return [
             'success' => false,
-            'error' => $errorPrefix . 'Les tâches terminées ne peuvent pas être modifiées'
+            'error' => 'Permission refusée: Seul le créateur, la personne assignée ou un manager peut modifier cette tâche'
         ];
     }
 
