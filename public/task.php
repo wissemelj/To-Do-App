@@ -1,23 +1,46 @@
 <?php
-require_once '../src/includes/auth.php';
-requireLogin();
+/**
+ * Fichier: task.php
+ *
+ * Page de détail d'une tâche spécifique dans l'application TacTâche.
+ * Cette page affiche les informations complètes d'une tâche et permet
+ * d'interagir avec celle-ci (commentaires, etc.).
+ *
+ * Fonctionnalités:
+ * - Affichage des détails complets d'une tâche (titre, description, statut, échéance)
+ * - Affichage des informations d'assignation et de création
+ * - Affichage des commentaires associés à la tâche
+ * - Formulaire pour ajouter un nouveau commentaire
+ *
+ * Paramètres:
+ * - id: Identifiant de la tâche à afficher (passé via GET)
+ *
+ * Sécurité:
+ * - Vérification que l'utilisateur est connecté
+ * - Vérification que l'utilisateur a le droit de voir cette tâche
+ * - Protection contre les injections SQL via requêtes préparées
+ */
+require_once '../src/includes/config.php';
 
-require_once '../src/includes/database.php';
+// Vérifier que l'utilisateur est connecté
+$userObj->requireLogin(SITE_URL . '/login.php');
 
+// Récupération de l'ID de la tâche depuis l'URL
 $taskId = $_GET['id'] ?? null;
 
+// Redirection si aucun ID n'est fourni
 if (!$taskId) {
-    header("Location: index.php");
+    Utility::redirect('index.php');
     exit();
 }
 
 // Vérifier si l'utilisateur peut voir cette tâche
-if (!canViewTask((int)$taskId)) {
-    header("Location: index.php");
+if (!$userObj->canViewTask((int)$taskId, $taskObj)) {
+    Utility::redirect('index.php');
     exit();
 }
 
-// Récupérer la tâche
+// Récupérer les détails de la tâche avec les informations du créateur et de la personne assignée
 $stmt = $pdo->prepare("
     SELECT tasks.*, users.username AS creator, assigned.username AS assignee
     FROM tasks
@@ -28,12 +51,13 @@ $stmt = $pdo->prepare("
 $stmt->execute([$taskId]);
 $task = $stmt->fetch();
 
+// Redirection si la tâche n'existe pas
 if (!$task) {
     header("Location: index.php");
     exit();
 }
 
-// Récupérer les commentaires
+// Récupérer les commentaires associés à cette tâche
 $stmt = $pdo->prepare("
     SELECT comments.*, users.username
     FROM comments
@@ -47,7 +71,7 @@ $comments = $stmt->fetchAll();
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($task['title']) ?></title>
+    <title><?= htmlspecialchars($task['title']) ?> - TacTâche</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
