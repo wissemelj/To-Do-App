@@ -1,7 +1,26 @@
 <?php
+/**
+ * Fichier: login.php
+ *
+ * Page de connexion de l'application TacTâche permettant aux utilisateurs
+ * de s'authentifier pour accéder à l'application.
+ *
+ * Fonctionnalités:
+ * - Formulaire de connexion avec nom d'utilisateur/email et mot de passe
+ * - Redirection automatique vers le tableau de bord si déjà connecté
+ * - Lien vers la page d'inscription pour les nouveaux utilisateurs
+ *
+ * Traitement:
+ * - La soumission du formulaire est gérée par AJAX via Axios
+ * - L'authentification est traitée par login_action.php
+ *
+ * Sécurité:
+ * - Redirection automatique si l'utilisateur est déjà connecté
+ * - Validation des identifiants côté serveur
+ */
 require_once '../src/includes/config.php';
 
-// If user is already logged in, redirect to index page
+// Si l'utilisateur est déjà connecté, rediriger vers la page d'accueil
 if ($userObj->isLoggedIn()) {
     Utility::redirect('index.php');
 }
@@ -11,7 +30,7 @@ if ($userObj->isLoggedIn()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - Task Manager</title>
+    <title>Connexion - TacTâche</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/login.css">
 
@@ -20,7 +39,7 @@ if ($userObj->isLoggedIn()) {
     <div class="login-container">
         <div class="login-box">
             <div class="login-header">
-                <h1>Bienvenue !</h1>
+                <h1>Bienvenue à TacTâche !</h1>
                 <p>Connectez-vous à votre espace de travail</p>
             </div>
 

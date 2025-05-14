@@ -1,4 +1,25 @@
 <?php
+/**
+ * Fichier: register.php
+ *
+ * Page d'inscription de l'application TacTâche permettant aux nouveaux utilisateurs
+ * de créer un compte pour accéder à l'application.
+ *
+ * Fonctionnalités:
+ * - Formulaire d'inscription avec nom d'utilisateur, email, mot de passe et rôle
+ * - Redirection automatique vers le tableau de bord si déjà connecté
+ * - Lien vers la page de connexion pour les utilisateurs existants
+ *
+ * Traitement:
+ * - La soumission du formulaire est gérée par AJAX via Axios
+ * - L'inscription est traitée par register_action.php
+ * - Après inscription réussie, redirection vers la page de connexion
+ *
+ * Sécurité:
+ * - Redirection automatique si l'utilisateur est déjà connecté
+ * - Validation des données d'inscription côté serveur
+ * - Hachage sécurisé du mot de passe lors de l'enregistrement
+ */
 require_once '../src/includes/config.php';
 
 // Si l'utilisateur est déjà connecté, rediriger vers la page d'accueil
@@ -11,7 +32,7 @@ if ($userObj->isLoggedIn()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription - Task Manager</title>
+    <title>Inscription - TacTâche</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/register.css">
 </head>
@@ -19,7 +40,7 @@ if ($userObj->isLoggedIn()) {
     <div class="login-container">
         <div class="login-box">
             <div class="login-header">
-                <h1>Commencez maintenant</h1>
+                <h1>Rejoignez TacTâche</h1>
                 <p>Créez votre compte en 30 secondes</p>
             </div>
 

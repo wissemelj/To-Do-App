@@ -1,10 +1,30 @@
 <?php
+/**
+ * Fichier: calendar.php
+ *
+ * Page de calendrier de l'application TacTâche qui affiche les tâches sous forme
+ * de calendrier interactif, permettant une visualisation temporelle des échéances.
+ *
+ * Fonctionnalités:
+ * - Affichage des tâches dans un calendrier mensuel, hebdomadaire ou quotidien
+ * - Visualisation des tâches avec code couleur selon leur statut
+ * - Consultation des détails d'une tâche en cliquant sur l'événement
+ * - Navigation temporelle (mois précédent/suivant, aujourd'hui)
+ *
+ * Dépendances:
+ * - Bibliothèque FullCalendar pour l'affichage du calendrier
+ * - Axios pour les requêtes AJAX
+ *
+ * Sécurité:
+ * - Accès restreint aux utilisateurs authentifiés
+ */
+
 require_once '../src/includes/config.php';
 
-// Check if user is logged in
+// Vérifier que l'utilisateur est connecté (sinon redirection vers login.php)
 $userObj->requireLogin(SITE_URL . '/login.php');
 
-// Ensure username is in session
+// S'assurer que le nom d'utilisateur est dans la session
 $userObj->ensureUsernameInSession();
 ?>
 <!DOCTYPE html>
@@ -21,7 +41,7 @@ $userObj->ensureUsernameInSession();
     <div class="container">
         <header class="dashboard-header">
             <div class="header-left">
-                <h1 class="header-title">Calendrier des Tâches</h1>
+                <h1 class="header-title">TacTâche - Calendrier</h1>
                 <span class="user-role"><?= $userObj->isManager() ? 'Manager' : 'Collaborateur' ?></span>
             </div>
             <div>
@@ -123,14 +143,19 @@ $userObj->ensureUsernameInSession();
 
     async function showTaskDetails(taskId) {
         try {
-            const url = `${API_PATHS.GET_TASK_DETAILS}?id=${taskId}&mode=calendar`;
+            const url = `${API_PATHS.GET_TASK_DETAILS}&id=${taskId}&mode=calendar`;
             console.log('URL appelée:', url);
             const response = await axios.get(url);
             if (!response.data.success) {
                 throw new Error(response.data.error || 'Erreur inconnue');
             }
 
+            // La réponse contient la tâche dans response.data.task pour le mode calendar
             const task = response.data.task;
+            if (!task) {
+                throw new Error('Données de tâche non trouvées dans la réponse');
+            }
+
             document.getElementById('taskModalTitle').textContent = task.title;
             document.getElementById('taskModalDescription').textContent = task.description || 'Aucune description';
             document.getElementById('taskModalStatus').textContent = getStatusLabel(task.status);
@@ -140,6 +165,7 @@ $userObj->ensureUsernameInSession();
 
             toggleModal('taskModal', true);
         } catch (error) {
+            console.error('Erreur détaillée:', error);
             handleApiError(error, 'Impossible de charger les détails de la tâche');
         }
     }
