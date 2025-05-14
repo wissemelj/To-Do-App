@@ -155,15 +155,35 @@ class User {
     /**
      * Vérifie si l'utilisateur peut modifier une tâche
      *
-     * Dans cette version simplifiée, tous les utilisateurs peuvent modifier toutes les tâches.
+     * Cette méthode vérifie si:
+     * 1. L'utilisateur est un manager, le créateur de la tâche ou la personne assignée
+     * 2. La tâche n'est pas marquée comme 'done' (terminée)
      *
      * @param int $taskId L'ID de la tâche
      * @param Task $taskObj L'objet Task pour accéder aux méthodes de tâche
-     * @return bool Toujours vrai dans cette version simplifiée
+     * @return bool Vrai si l'utilisateur peut modifier la tâche, faux sinon
      */
     public function canModifyTask(int $taskId, Task $taskObj): bool {
-        // Dans cette version simplifiée, tout le monde peut modifier toutes les tâches
-        return true;
+        // Récupère les détails de la tâche
+        $task = $taskObj->getTask($taskId);
+        if (!$task) {
+            return false;
+        }
+
+        // Les tâches terminées ne peuvent pas être modifiées
+        if ($task['status'] === 'done') {
+            return false;
+        }
+
+        // Les managers peuvent modifier toutes les tâches
+        if ($this->isManager()) {
+            return true;
+        }
+
+        $userId = $this->getLoggedInUserId();
+
+        // L'utilisateur peut modifier la tâche s'il l'a créée ou si elle lui est assignée
+        return $task['created_by'] == $userId || $task['assigned_to'] == $userId;
     }
 
     /**
