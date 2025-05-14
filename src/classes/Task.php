@@ -112,17 +112,18 @@ class Task {
             $description = $data['description'] ?? null;  // Description (peut être null)
             $userId = $data['user_id'];  // ID de l'utilisateur qui crée la tâche
             $assignedTo = $data['assigned_to'] ?: null;  // ID de l'utilisateur assigné (peut être null)
+            $photoPath = $data['photo_path'] ?? null;  // Chemin de la photo (peut être null)
 
             // Formate la date d'échéance si elle existe
             $dueDate = $data['due_date'] ? date('Y-m-d H:i:s', strtotime($data['due_date'])) : null;
 
             // Prépare et exécute la requête SQL avec des paramètres liés pour plus de sécurité
             $stmt = $this->pdo->prepare("
-                INSERT INTO tasks (title, description, created_by, assigned_to, due_date, status)
-                VALUES (?, ?, ?, ?, ?, 'todo')
+                INSERT INTO tasks (title, description, created_by, assigned_to, due_date, photo_path, status)
+                VALUES (?, ?, ?, ?, ?, ?, 'todo')
             ");
 
-            $stmt->execute([$title, $description, $userId, $assignedTo, $dueDate]);
+            $stmt->execute([$title, $description, $userId, $assignedTo, $dueDate, $photoPath]);
 
             // Retourne true pour indiquer que la création a réussi
             return true;
@@ -148,6 +149,7 @@ class Task {
             $title = $data['title'];  // Nouveau titre
             $description = $data['description'] ?? null;  // Nouvelle description
             $status = $data['status'] ?? 'todo';  // Nouveau statut
+            $photoPath = $data['photo_path'] ?? null;  // Chemin de la photo (peut être null)
 
             // Formate la date d'échéance si elle existe
             $dueDate = !empty($data['due_date']) ? date('Y-m-d H:i:s', strtotime($data['due_date'])) : null;
@@ -161,11 +163,12 @@ class Task {
                 description = ?,
                 status = ?,
                 due_date = ?,
-                assigned_to = ?
+                assigned_to = ?,
+                photo_path = ?
                 WHERE id = ?
             ");
 
-            $stmt->execute([$title, $description, $status, $dueDate, $assignedTo, $id]);
+            $stmt->execute([$title, $description, $status, $dueDate, $assignedTo, $photoPath, $id]);
 
             // Retourne true pour indiquer que la mise à jour a réussi
             return true;
@@ -178,16 +181,26 @@ class Task {
     /**
      * Supprime une tâche
      *
-     * Cette méthode supprime une tâche de la base de données.
+     * Cette méthode supprime une tâche de la base de données et sa photo associée si elle existe.
      *
      * @param int $taskId L'ID de la tâche à supprimer
      * @return bool True si la suppression a réussi, false sinon
      */
     public function deleteTask(int $taskId): bool {
         try {
-            // Prépare et exécute la requête SQL avec un paramètre lié pour plus de sécurité
+            // Récupère le chemin de la photo avant de supprimer la tâche
+            $stmt = $this->pdo->prepare("SELECT photo_path FROM tasks WHERE id = ?");
+            $stmt->execute([$taskId]);
+            $photoPath = $stmt->fetchColumn();
+
+            // Supprime la tâche de la base de données
             $stmt = $this->pdo->prepare("DELETE FROM tasks WHERE id = ?");
             $stmt->execute([$taskId]);
+
+            // Si la tâche avait une photo, la supprimer du système de fichiers
+            if (!empty($photoPath)) {
+                self::deleteTaskPhoto($photoPath);
+            }
 
             // Retourne true pour indiquer que la suppression a réussi
             return true;
@@ -267,6 +280,24 @@ class Task {
     }
 
     /**
+     * Vérifie si un utilisateur est le créateur d'une tâche
+     *
+     * Cette méthode vérifie si l'utilisateur spécifié est le créateur de la tâche.
+     *
+     * @param int $taskId L'ID de la tâche
+     * @param int $userId L'ID de l'utilisateur
+     * @return bool True si l'utilisateur est le créateur, false sinon
+     */
+    public function isTaskCreator(int $taskId, int $userId): bool {
+        // Prépare et exécute la requête SQL avec des paramètres liés pour plus de sécurité
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM tasks WHERE id = ? AND created_by = ?");
+        $stmt->execute([$taskId, $userId]);
+
+        // Retourne true si l'utilisateur est le créateur
+        return $stmt->fetchColumn() > 0;
+    }
+
+    /**
      * Récupère les libellés des statuts de tâche
      *
      * Cette méthode statique retourne les libellés en français pour chaque statut.
@@ -280,5 +311,66 @@ class Task {
             'in_progress' => 'En Cours',  // Tâches en cours
             'done' => 'Terminé'           // Tâches terminées
         ];
+    }
+
+    /**
+     * Gère le téléchargement d'une photo pour une tâche
+     *
+     * Cette méthode traite le fichier téléchargé, le déplace vers le dossier de destination
+     * et retourne le chemin relatif du fichier.
+     *
+     * @param array $file Le fichier téléchargé ($_FILES['photo'])
+     * @return string|null Le chemin relatif du fichier ou null en cas d'erreur
+     */
+    public static function handlePhotoUpload(array $file): ?string {
+        // Vérifier si un fichier a été téléchargé
+        if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        // Vérifier le type de fichier (uniquement les images)
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            return null;
+        }
+
+        // Créer un nom de fichier unique pour éviter les collisions
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $uniqueName = uniqid('task_', true) . '.' . $extension;
+
+        // Définir le chemin de destination
+        $uploadDir = 'uploads/tasks/';
+        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/To-Do-App/public/' . $uploadDir;
+        $filePath = $uploadPath . $uniqueName;
+
+        // Déplacer le fichier téléchargé vers le dossier de destination
+        if (move_uploaded_file($file['tmp_name'], $filePath)) {
+            // Retourner le chemin relatif du fichier
+            return $uploadDir . $uniqueName;
+        }
+
+        return null;
+    }
+
+    /**
+     * Supprime la photo d'une tâche
+     *
+     * Cette méthode supprime le fichier photo associé à une tâche.
+     *
+     * @param string $photoPath Le chemin de la photo à supprimer
+     * @return bool True si la suppression a réussi, false sinon
+     */
+    public static function deleteTaskPhoto(string $photoPath): bool {
+        if (empty($photoPath)) {
+            return false;
+        }
+
+        $fullPath = $_SERVER['DOCUMENT_ROOT'] . '/To-Do-App/public/' . $photoPath;
+
+        if (file_exists($fullPath)) {
+            return unlink($fullPath);
+        }
+
+        return false;
     }
 }

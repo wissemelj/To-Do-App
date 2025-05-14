@@ -176,17 +176,37 @@ function handleGetCalendarTasks(): void {
 function handleCreateTask(): void {
     global $userObj, $taskObj;
 
-    // Récupère les données JSON envoyées dans le corps de la requête
-    $data = json_decode(file_get_contents('php://input'), true);
+    // Vérifie si la requête contient des données de formulaire multipart
+    $isMultipart = isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false;
 
-    // Valide que les champs obligatoires sont présents et non vides
-    $validation = Utility::validateRequired($data, ['title']);
-    if (!$validation['valid']) {
+    if ($isMultipart) {
+        // Récupère les données du formulaire
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $assignedTo = $_POST['assigned_to'] ?? null;
+        $dueDate = $_POST['due_date'] ?? null;
+
+        // Traite le téléchargement de la photo si présent
+        $photoPath = null;
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $photoPath = Task::handlePhotoUpload($_FILES['photo']);
+        }
+    } else {
+        // Récupère les données JSON envoyées dans le corps de la requête
+        $data = json_decode(file_get_contents('php://input'), true);
+        $title = trim($data['title'] ?? '');
+        $description = trim($data['description'] ?? '');
+        $assignedTo = $data['assigned_to'] ?? null;
+        $dueDate = $data['due_date'] ?? null;
+        $photoPath = null; // Pas de photo dans les requêtes JSON
+    }
+
+    // Valide que le titre est présent et non vide
+    if (empty($title)) {
         Utility::jsonResponse(['success' => false, 'error' => 'Le titre est obligatoire']);
     }
 
     $userId = $userObj->getLoggedInUserId();
-    $assignedTo = $data['assigned_to'] ?? null;
 
     // Vérifie les permissions d'assignation
     if ($assignedTo !== null && $assignedTo != $userId && !$userObj->isManager()) {
@@ -198,10 +218,11 @@ function handleCreateTask(): void {
 
     // Crée la tâche dans la base de données
     $result = $taskObj->createTask([
-        'title' => trim($data['title']),
-        'description' => trim($data['description'] ?? ''),
+        'title' => $title,
+        'description' => $description,
         'assigned_to' => $assignedTo,
-        'due_date' => $data['due_date'] ?? null,
+        'due_date' => $dueDate,
+        'photo_path' => $photoPath,
         'user_id' => $userId
     ]);
 
@@ -213,18 +234,74 @@ function handleCreateTask(): void {
  * Gère la mise à jour d'une tâche existante
  */
 function handleUpdateTask(): void {
-    global $userObj, $taskObj;
+    global $userObj, $taskObj, $pdo;
 
-    // Récupère les données JSON envoyées dans le corps de la requête
-    $input = json_decode(file_get_contents('php://input'), true);
+    // Vérifie si la requête contient des données de formulaire multipart
+    $isMultipart = isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false;
 
-    // Valide que les champs obligatoires sont présents et non vides
-    $validation = Utility::validateRequired($input, ['id', 'title']);
-    if (!$validation['valid']) {
-        Utility::jsonResponse(['success' => false, 'error' => implode(', ', $validation['errors'])]);
+    if ($isMultipart) {
+        // Récupère les données du formulaire
+        $taskId = (int)($_POST['id'] ?? 0);
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $status = $_POST['status'] ?? 'todo';
+        $assignedTo = $_POST['assigned_to'] ?? null;
+        $dueDate = $_POST['due_date'] ?? null;
+
+        // Traite le téléchargement de la photo si présent
+        $photoPath = null;
+        $keepExistingPhoto = isset($_POST['keep_existing_photo']) && $_POST['keep_existing_photo'] === '1';
+
+        if (!$keepExistingPhoto) {
+            if (isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+                // Récupère l'ancienne photo pour la supprimer si nécessaire
+                $stmt = $pdo->prepare("SELECT photo_path FROM tasks WHERE id = ?");
+                $stmt->execute([$taskId]);
+                $oldPhotoPath = $stmt->fetchColumn();
+
+                // Télécharge la nouvelle photo
+                $photoPath = Task::handlePhotoUpload($_FILES['photo']);
+
+                // Supprime l'ancienne photo si elle existe
+                if ($photoPath && !empty($oldPhotoPath)) {
+                    Task::deleteTaskPhoto($oldPhotoPath);
+                }
+            } else {
+                // Si aucune nouvelle photo n'est téléchargée et qu'on ne garde pas l'ancienne, on supprime l'ancienne
+                $stmt = $pdo->prepare("SELECT photo_path FROM tasks WHERE id = ?");
+                $stmt->execute([$taskId]);
+                $oldPhotoPath = $stmt->fetchColumn();
+
+                if (!empty($oldPhotoPath)) {
+                    Task::deleteTaskPhoto($oldPhotoPath);
+                }
+
+                $photoPath = null;
+            }
+        } else {
+            // Garde l'ancienne photo
+            $stmt = $pdo->prepare("SELECT photo_path FROM tasks WHERE id = ?");
+            $stmt->execute([$taskId]);
+            $photoPath = $stmt->fetchColumn();
+        }
+    } else {
+        // Récupère les données JSON envoyées dans le corps de la requête
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        // Valide que les champs obligatoires sont présents et non vides
+        $validation = Utility::validateRequired($input, ['id', 'title']);
+        if (!$validation['valid']) {
+            Utility::jsonResponse(['success' => false, 'error' => implode(', ', $validation['errors'])]);
+        }
+
+        $taskId = (int)$input['id'];
+        $title = trim($input['title']);
+        $description = trim($input['description'] ?? '');
+        $status = $input['status'] ?? 'todo';
+        $assignedTo = $input['assigned_to'] ?? null;
+        $dueDate = $input['due_date'] ?? null;
+        $photoPath = $input['photo_path'] ?? null;
     }
-
-    $taskId = (int)$input['id'];
 
     // Vérifie si la tâche peut être modifiée
     $error = checkTaskModifiable($taskId);
@@ -233,7 +310,6 @@ function handleUpdateTask(): void {
     }
 
     $userId = $userObj->getLoggedInUserId();
-    $assignedTo = $input['assigned_to'] ?? null;
 
     // Vérifie les permissions d'assignation
     if ($assignedTo !== null && $assignedTo != $userId && !$userObj->isManager()) {
@@ -246,11 +322,12 @@ function handleUpdateTask(): void {
     // Met à jour la tâche dans la base de données
     $result = $taskObj->updateTask([
         'id' => $taskId,
-        'title' => $input['title'],
-        'description' => $input['description'] ?? null,
-        'status' => $input['status'] ?? 'todo',
-        'due_date' => $input['due_date'] ?? null,
-        'assigned_to' => $assignedTo
+        'title' => $title,
+        'description' => $description,
+        'status' => $status,
+        'due_date' => $dueDate,
+        'assigned_to' => $assignedTo,
+        'photo_path' => $photoPath
     ]);
 
     // Renvoie le résultat
