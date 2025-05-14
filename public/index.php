@@ -77,6 +77,11 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <?php if (!empty($task['photo_path'])): ?>
+                        <div class="task-photo">
+                            <img src="<?= $task['photo_path'] ?>" alt="Photo de la tâche" style="max-width: 100%; max-height: 150px; display: block; margin: 5px auto;">
+                        </div>
+                        <?php endif; ?>
                         <?php if (!empty($task['description'])): ?>
                         <p class="task-description"><?= Utility::h($task['description']) ?></p>
                         <?php endif; ?>
@@ -104,7 +109,7 @@ $tasksByStatus = $taskObj->getTasksByStatus();
             <div class="modal-content">
                 <h3>Créer une nouvelle tâche</h3>
                 <button type="button" class="modal-close" onclick="hideTaskForm()">&times;</button>
-                <form id="newTaskForm">
+                <form id="newTaskForm" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="task-title">Titre:</label>
                         <input type="text" id="task-title" name="title" required>
@@ -119,6 +124,11 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                         <label for="task-due-date">Date limite:</label>
                         <input type="datetime-local" id="task-due-date" name="due_date">
                     </div>
+                    <div class="form-group">
+                        <label for="task-photo">Photo (optionnelle):</label>
+                        <input type="file" id="task-photo" name="photo" accept="image/*">
+                        <small>Formats acceptés: JPG, PNG, GIF, WEBP</small>
+                    </div>
                     <div class="form-buttons">
                         <button type="submit" class="btn-primary">Créer</button>
                         <button type="button" class="btn-secondary" onclick="hideTaskForm()">Annuler</button>
@@ -132,7 +142,7 @@ $tasksByStatus = $taskObj->getTasksByStatus();
             <div class="modal-content">
                 <h3>Créer une nouvelle tâche</h3>
                 <button type="button" class="modal-close" onclick="hideTaskForm()">&times;</button>
-                <form id="newTaskForm">
+                <form id="newTaskForm" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="task-title">Titre:</label>
                         <input type="text" id="task-title" name="title" required>
@@ -155,6 +165,11 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                     <div class="form-group">
                         <label for="task-due-date">Date limite:</label>
                         <input type="datetime-local" id="task-due-date" name="due_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="task-photo">Photo (optionnelle):</label>
+                        <input type="file" id="task-photo" name="photo" accept="image/*">
+                        <small>Formats acceptés: JPG, PNG, GIF, WEBP</small>
                     </div>
                     <div class="form-buttons">
                         <button type="submit" class="btn-primary">Créer</button>
@@ -210,23 +225,43 @@ $tasksByStatus = $taskObj->getTasksByStatus();
         // Empêcher le comportement par défaut du formulaire (rechargement de la page)
         e.preventDefault();
 
-        // Récupérer les données du formulaire
-        const formData = {
-            title: e.target.title.value,                    // Titre de la tâche
-            description: e.target.description.value,        // Description de la tâche
-            assigned_to: e.target.assigned_to.value || null, // Utilisateur assigné (ou null si non assigné)
-            due_date: e.target.due_date.value,              // Date limite
-            action: 'create'                                // Action à effectuer
-        };
+        // Vérifier si le formulaire contient un fichier
+        const photoInput = e.target.querySelector('input[type="file"]');
+        const hasPhoto = photoInput && photoInput.files && photoInput.files.length > 0;
+
+        let response;
 
         try {
-            console.log('Envoi des données:', formData);
-            console.log('URL:', API_PATHS.CREATE_TASK);
+            if (hasPhoto) {
+                // Si un fichier est présent, utiliser FormData pour l'upload
+                const formData = new FormData(e.target);
+                formData.append('action', 'create');
 
-            // Envoyer les données au serveur
-            const response = await axios.post(API_PATHS.CREATE_TASK, formData, {
-                headers: { 'Content-Type': 'application/json' }
-            });
+                console.log('Envoi des données avec photo:', formData);
+                console.log('URL:', API_PATHS.CREATE_TASK);
+
+                // Envoyer les données au serveur avec FormData
+                response = await axios.post(API_PATHS.CREATE_TASK, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                // Si pas de fichier, utiliser JSON comme avant
+                const formData = {
+                    title: e.target.title.value,                    // Titre de la tâche
+                    description: e.target.description.value,        // Description de la tâche
+                    assigned_to: e.target.assigned_to.value || null, // Utilisateur assigné (ou null si non assigné)
+                    due_date: e.target.due_date.value,              // Date limite
+                    action: 'create'                                // Action à effectuer
+                };
+
+                console.log('Envoi des données sans photo:', formData);
+                console.log('URL:', API_PATHS.CREATE_TASK);
+
+                // Envoyer les données au serveur en JSON
+                response = await axios.post(API_PATHS.CREATE_TASK, formData, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
 
             if (response.data.success) {
                 // Si la création a réussi, recharger la page pour afficher la nouvelle tâche
@@ -299,6 +334,21 @@ $tasksByStatus = $taskObj->getTasksByStatus();
         const currentUserId = <?= $userObj->getLoggedInUserId() ?>;                  // ID de l'utilisateur
         const currentUsername = '<?= Utility::h($_SESSION['username'] ?? 'Vous-même') ?>'; // Nom d'utilisateur
 
+        // Préparer l'affichage de la photo existante si elle existe
+        const photoHtml = task.photo_path
+            ? `
+            <div class="form-group">
+                <label>Photo actuelle:</label>
+                <div class="task-photo-preview">
+                    <img src="${task.photo_path}" alt="Photo de la tâche" style="max-width: 100%; max-height: 200px;">
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" id="keep-photo" name="keep_existing_photo" value="1" checked>
+                    <label for="keep-photo">Conserver cette photo</label>
+                </div>
+            </div>`
+            : '';
+
         // Définir le HTML du formulaire en fonction du rôle de l'utilisateur
         let formHTML = '';
 
@@ -309,7 +359,7 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                 <div class="modal-content">
                     <h3>Modifier la tâche</h3>
                     <button type="button" class="modal-close" onclick="closeEditForm()">&times;</button>
-                    <form id="editForm">
+                    <form id="editForm" enctype="multipart/form-data">
                         <!-- ID de la tâche (caché) -->
                         <input type="hidden" name="id" value="${task.id}">
                         <input type="hidden" name="assigned_to" value="${currentUserId}">
@@ -342,6 +392,16 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                             <input type="datetime-local" id="edit-task-due-date" name="due_date" value="${task.due_date ? task.due_date.slice(0, 16) : ''}">
                         </div>
 
+                        <!-- Photo existante -->
+                        ${photoHtml}
+
+                        <!-- Nouvelle photo -->
+                        <div class="form-group">
+                            <label for="edit-task-photo">Nouvelle photo (optionnelle):</label>
+                            <input type="file" id="edit-task-photo" name="photo" accept="image/*">
+                            <small>Formats acceptés: JPG, PNG, GIF, WEBP</small>
+                        </div>
+
                         <!-- Boutons d'action -->
                         <div class="form-buttons">
                             <button type="submit" class="btn-primary">Enregistrer</button>
@@ -357,7 +417,7 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                 <div class="modal-content">
                     <h3>Modifier la tâche</h3>
                     <button type="button" class="modal-close" onclick="closeEditForm()">&times;</button>
-                    <form id="editForm">
+                    <form id="editForm" enctype="multipart/form-data">
                         <!-- ID de la tâche (caché) -->
                         <input type="hidden" name="id" value="${task.id}">
 
@@ -398,6 +458,16 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                             <input type="datetime-local" id="edit-task-due-date" name="due_date" value="${task.due_date ? task.due_date.slice(0, 16) : ''}">
                         </div>
 
+                        <!-- Photo existante -->
+                        ${photoHtml}
+
+                        <!-- Nouvelle photo -->
+                        <div class="form-group">
+                            <label for="edit-task-photo">Nouvelle photo (optionnelle):</label>
+                            <input type="file" id="edit-task-photo" name="photo" accept="image/*">
+                            <small>Formats acceptés: JPG, PNG, GIF, WEBP</small>
+                        </div>
+
                         <!-- Boutons d'action -->
                         <div class="form-buttons">
                             <button type="submit" class="btn-primary">Enregistrer</button>
@@ -420,25 +490,55 @@ $tasksByStatus = $taskObj->getTasksByStatus();
         // Empêcher le comportement par défaut du formulaire
         e.preventDefault();
 
-        // Récupérer les données du formulaire
-        const formData = {
-            id: e.target.id.value,                      // ID de la tâche
-            title: e.target.title.value,                // Titre
-            description: e.target.description.value,    // Description
-            status: e.target.status.value,              // Statut (todo, in_progress, done)
-            assigned_to: e.target.assigned_to.value || null, // Utilisateur assigné
-            due_date: e.target.due_date.value,          // Date limite
-            action: 'update'                            // Action à effectuer
-        };
+        // Vérifier si le formulaire contient un fichier
+        const photoInput = e.target.querySelector('input[type="file"]');
+        const hasPhoto = photoInput && photoInput.files && photoInput.files.length > 0;
+        const keepExistingPhoto = e.target.querySelector('input[name="keep_existing_photo"]');
+
+        let response;
 
         try {
-            console.log('Envoi des données de mise à jour:', formData);
-            console.log('URL:', API_PATHS.EDIT_TASK);
+            if (hasPhoto || (keepExistingPhoto && !keepExistingPhoto.checked)) {
+                // Si un fichier est présent ou si on veut supprimer la photo existante, utiliser FormData
+                const formData = new FormData(e.target);
+                formData.append('action', 'update');
 
-            // Envoyer les données au serveur
-            const response = await axios.post(API_PATHS.EDIT_TASK, formData, {
-                headers: { 'Content-Type': 'application/json' }
-            });
+                console.log('Envoi des données avec photo:', formData);
+                console.log('URL:', API_PATHS.EDIT_TASK);
+
+                // Envoyer les données au serveur avec FormData
+                response = await axios.post(API_PATHS.EDIT_TASK, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                // Si pas de fichier et qu'on garde la photo existante, utiliser JSON
+                const formData = {
+                    id: e.target.id.value,                      // ID de la tâche
+                    title: e.target.title.value,                // Titre
+                    description: e.target.description.value,    // Description
+                    status: e.target.status.value,              // Statut (todo, in_progress, done)
+                    assigned_to: e.target.assigned_to.value || null, // Utilisateur assigné
+                    due_date: e.target.due_date.value,          // Date limite
+                    action: 'update'                            // Action à effectuer
+                };
+
+                // Si on garde la photo existante et qu'elle existe
+                if (keepExistingPhoto && keepExistingPhoto.checked) {
+                    // Récupérer l'URL de la photo depuis l'image affichée
+                    const photoImg = e.target.querySelector('.task-photo-preview img');
+                    if (photoImg) {
+                        formData.photo_path = photoImg.src;
+                    }
+                }
+
+                console.log('Envoi des données sans photo:', formData);
+                console.log('URL:', API_PATHS.EDIT_TASK);
+
+                // Envoyer les données au serveur en JSON
+                response = await axios.post(API_PATHS.EDIT_TASK, formData, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
 
             if (response.data.success) {
                 // Si la modification a réussi, recharger la page

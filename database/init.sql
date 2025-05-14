@@ -18,6 +18,7 @@ CREATE TABLE tasks (
     due_date DATETIME,
     created_by INT NOT NULL,
     assigned_to INT,
+    photo_path VARCHAR(255) DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (assigned_to) REFERENCES users(id)
