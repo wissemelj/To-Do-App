@@ -473,20 +473,20 @@ body {
 }
 
 .task-modal-actions {
-    margin-top: 20px;
+    margin-top: 12px;
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 6px;
 }
 
 .task-modal-actions button {
-    padding: 8px 15px;
+    padding: 6px 12px;
     border-radius: var(--border-radius-sm);
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-normal);
     border: none;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .task-modal-actions .btn-edit {
