@@ -127,7 +127,7 @@ class Task {
 
             // Retourne true pour indiquer que la création a réussi
             return true;
-        } catch (PDOException $e) {
+        } catch (PDOException) {
             // En cas d'erreur, retourne false
             return false;
         }
@@ -172,7 +172,7 @@ class Task {
 
             // Retourne true pour indiquer que la mise à jour a réussi
             return true;
-        } catch (PDOException $e) {
+        } catch (PDOException) {
             // En cas d'erreur, retourne false
             return false;
         }
@@ -204,7 +204,7 @@ class Task {
 
             // Retourne true pour indiquer que la suppression a réussi
             return true;
-        } catch (PDOException $e) {
+        } catch (PDOException) {
             // En cas d'erreur, retourne false
             return false;
         }
@@ -311,6 +311,46 @@ class Task {
             'in_progress' => 'En Cours',  // Tâches en cours
             'done' => 'Terminé'           // Tâches terminées
         ];
+    }
+
+    /**
+     * Récupère les tâches pour l'exportation PDF
+     *
+     * Cette méthode récupère les tâches d'un utilisateur pour l'exportation PDF.
+     * Elle peut filtrer les tâches par statut si un filtre est fourni.
+     *
+     * @param int $userId L'ID de l'utilisateur
+     * @param string|null $statusFilter Filtre optionnel par statut (todo, in_progress, done)
+     * @return array Un tableau de tâches
+     */
+    public function getTasksForExport(int $userId, ?string $statusFilter = null): array {
+        // Construire la requête SQL de base
+        $sql = "
+            SELECT tasks.*,
+            users.username AS assigned_username,
+            creator.username AS creator_username
+            FROM tasks
+            LEFT JOIN users ON tasks.assigned_to = users.id
+            LEFT JOIN users AS creator ON tasks.created_by = creator.id
+            WHERE (tasks.created_by = :userId OR tasks.assigned_to = :userId)
+        ";
+
+        // Ajouter le filtre de statut si fourni
+        $params = [':userId' => $userId];
+        if ($statusFilter !== null && in_array($statusFilter, ['todo', 'in_progress', 'done'])) {
+            $sql .= " AND tasks.status = :status";
+            $params[':status'] = $statusFilter;
+        }
+
+        // Ajouter l'ordre de tri
+        $sql .= " ORDER BY tasks.due_date ASC, tasks.title ASC";
+
+        // Préparer et exécuter la requête
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        // Retourner les tâches
+        return $stmt->fetchAll();
     }
 
     /**

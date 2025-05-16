@@ -38,6 +38,7 @@ $tasksByStatus = $taskObj->getTasksByStatus();
     <title>Tableau de bord - TacTâche</title>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         // Afficher le rôle de l'utilisateur dans la console pour débogage
         console.log('Rôle utilisateur: <?= $userObj->getUserRole() ?>');
@@ -52,10 +53,11 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                 <h1 class="header-title">TacTâche - Backlog</h1>
                 <span class="user-role"><?= $userObj->isManager() ? 'Manager' : 'Collaborateur' ?></span>
             </div>
-            <div>
-                <button class="btn-primary" onclick="showTaskForm()">+ Nouvelle tâche</button>
-                <a href="calendar.php" class="btn-primary">Calendrier</a>
-                <a href="logout.php" class="btn-primary" style="margin-left: 10px;">Déconnexion</a>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="showTaskForm()"><i class="fas fa-plus"></i> Nouvelle tâche</button>
+                <a href="calendar.php" class="btn-primary"><i class="fas fa-calendar-alt"></i> Calendrier</a>
+                <a href="../src/actions/export_tasks.php" class="btn-primary"><i class="fas fa-file-export"></i> Exporter</a>
+                <a href="logout.php" class="btn-secondary"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
             </div>
         </header>
 
@@ -208,7 +210,11 @@ $tasksByStatus = $taskObj->getTasksByStatus();
                 console.error('Erreur initialisation:', error);
             }
         }
+
+        // Initialisation terminée
     });
+
+    // No dropdown functions needed anymore
 
     // Fonction pour afficher le formulaire de création de tâche
     function showTaskForm() {

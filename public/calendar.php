@@ -33,8 +33,95 @@ $userObj->ensureUsernameInSession();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendrier des Tâches</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/index.css">
     <link rel="stylesheet" href="assets/css/calendar.css">
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles for calendar buttons */
+        .fc .fc-button-primary {
+            position: relative;
+            min-width: 38px;
+            justify-content: center;
+            border-radius: 6px !important;
+        }
+
+        /* Remove default button group styling */
+        .fc .fc-button-group > .fc-button {
+            border-radius: 6px !important;
+            margin: 0 !important;
+        }
+
+        /* View buttons should have consistent width */
+        .fc .fc-dayGridMonth-button,
+        .fc .fc-timeGridWeek-button,
+        .fc .fc-timeGridDay-button,
+        .fc .fc-today-button {
+            min-width: 110px;
+        }
+
+        /* Mobile styles for buttons */
+        @media (max-width: 768px) {
+            .fc .fc-dayGridMonth-button,
+            .fc .fc-timeGridWeek-button,
+            .fc .fc-timeGridDay-button,
+            .fc .fc-today-button {
+                min-width: 90px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .fc .fc-dayGridMonth-button,
+            .fc .fc-timeGridWeek-button,
+            .fc .fc-timeGridDay-button,
+            .fc .fc-today-button {
+                min-width: 70px;
+                padding: 6px 8px !important;
+            }
+        }
+
+        /* Add icons to prev/next buttons */
+        .fc .fc-prev-button:before {
+            content: "\f053"; /* chevron-left */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+        }
+
+        .fc .fc-next-button:before {
+            content: "\f054"; /* chevron-right */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+        }
+
+        .fc .fc-today-button:before {
+            content: "\f133"; /* calendar-check */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 5px;
+        }
+
+        .fc .fc-dayGridMonth-button:before {
+            content: "\f073"; /* calendar */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 5px;
+        }
+
+        .fc .fc-timeGridWeek-button:before {
+            content: "\f0ce"; /* table */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 5px;
+        }
+
+        .fc .fc-timeGridDay-button:before {
+            content: "\f783"; /* calendar-day */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 5px;
+        }
+    </style>
 </head>
 
 <body>
@@ -44,9 +131,9 @@ $userObj->ensureUsernameInSession();
                 <h1 class="header-title">TacTâche - Calendrier</h1>
                 <span class="user-role"><?= $userObj->isManager() ? 'Manager' : 'Collaborateur' ?></span>
             </div>
-            <div>
-                <a href="index.php" class="btn-primary">Retour au tableau</a>
-                <a href="logout.php" class="btn-primary" style="margin-left: 10px;">Déconnexion</a>
+            <div class="header-actions">
+                <a href="index.php" class="btn-primary"><i class="fas fa-tasks"></i> Backlog</a>
+                <a href="logout.php" class="btn-secondary"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
             </div>
         </header>
 
@@ -83,6 +170,7 @@ $userObj->ensureUsernameInSession();
                 </div>
             </div>
         </div>
+
     </div>
 
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
@@ -100,7 +188,11 @@ $userObj->ensureUsernameInSession();
                 closeTaskModal();
             }
         });
+
+        // Initialisation terminée
     });
+
+    // Calendar initialization functions
 
     function initializeCalendar() {
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -110,6 +202,13 @@ $userObj->ensureUsernameInSession();
                 left: 'prev,next today',
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            // Customize button text with icons
+            buttonText: {
+                today: 'Aujourd\'hui',
+                month: 'Mois',
+                week: 'Semaine',
+                day: 'Jour'
             },
             events: async (info, successCallback) => {
                 try {
