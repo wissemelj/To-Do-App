@@ -72,7 +72,48 @@ $comments = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($task['title']) ?> - TacTâche</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .task-details {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .comments {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        .comment {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+
+        .comments form {
+            margin-top: 20px;
+        }
+
+        .comments textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 10px;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* Comment button styles are now unified in styles.css */
+        .comments button {
+            min-width: 100px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -99,7 +140,7 @@ $comments = $stmt->fetchAll();
             <form action="../src/actions/comment_action.php" method="POST">
                 <input type="hidden" name="task_id" value="<?= $taskId ?>">
                 <textarea name="content" placeholder="Ajouter un commentaire..." required></textarea>
-                <button type="submit">Envoyer</button>
+                <button type="submit" class="btn-primary btn-sm">Envoyer</button>
             </form>
         </div>
     </div>

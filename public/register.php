@@ -33,7 +33,7 @@ if ($userObj->isLoggedIn()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inscription - TacTâche</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/register.css">
 </head>
 <body>
@@ -69,7 +69,7 @@ if ($userObj->isLoggedIn()) {
                     <i class="fas fa-user-tag input-icon"></i>
                 </div>
 
-                <button type="submit" class="register-button">S'inscrire</button>
+                <button type="submit" class="btn-primary register-button">S'inscrire</button>
             </form>
 
             <div class="login-link">
@@ -79,7 +79,7 @@ if ($userObj->isLoggedIn()) {
     </div>
 
     <!-- Font Awesome -->
-    <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Script de gestion du formulaire -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

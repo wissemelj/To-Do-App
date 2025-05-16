@@ -24,6 +24,8 @@ body {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1; /* Lower than the dropdown */
 }
 
 .header-left {
@@ -47,20 +49,30 @@ body {
     margin: 0;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 8px;
+/* Button styles are now unified in styles.css */
+
+/* Style for select dropdown */
+select.btn-primary {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
     cursor: pointer;
-    transition: transform 0.3s ease;
-    font-weight: 600;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+/* Style for dropdown options */
+select.btn-primary option {
+    background-color: white;
+    color: var(--text-dark);
+    padding: 10px;
+}
+
+select.btn-primary option:hover,
+select.btn-primary option:focus {
+    background-color: #f0f0f0;
 }
 
 .board {
@@ -154,6 +166,51 @@ body {
 @keyframes slideIn {
     from { transform: translateY(-20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+/* Dropdown Menu Styles - Simplified to match existing UI */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* Dropdown button styles are now unified in styles.css */
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 5px;
+    background-color: white;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+.dropdown-content a,
+.dropdown-content button {
+    color: var(--text-dark);
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    border: none;
+    background: none;
+    width: 100%;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.dropdown-content a:hover,
+.dropdown-content button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.show {
+    display: block;
 }
 
 @media (max-width: 1200px) {
