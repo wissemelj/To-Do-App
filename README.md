@@ -1,107 +1,122 @@
-# Application de Gestion de Tâches (To-Do App)
+# TacTâche - Application de Gestion de Tâches
 
-Une application web simple et intuitive pour la gestion de tâches, conçue pour les équipes avec différents niveaux d'accès.
+TacTâche est une application web de gestion de tâches simple et efficace, permettant aux équipes de collaborer sur des projets en organisant leurs tâches dans un tableau Kanban et un calendrier. Conçue pour améliorer la productivité et la collaboration, TacTâche offre une interface intuitive et des fonctionnalités adaptées aux besoins des équipes modernes.
 
 ## Fonctionnalités
 
-- **Gestion des tâches** : Créer, modifier, supprimer et visualiser des tâches
-- **Tableau Kanban** : Visualiser les tâches par statut (À faire, En cours, Terminé)
-- **Vue Calendrier** : Visualiser les tâches sur un calendrier
-- **Système d'authentification** : Inscription et connexion des utilisateurs
-- **Contrôle d'accès basé sur les rôles** : Managers et Collaborateurs avec différentes permissions
+- **Tableau des Statuts** : Visualisez vos tâches organisées par statut (À Faire, En Cours, Terminé) dans une interface de type Kanban claire et intuitive
+- **Vue Calendrier** : Planifiez vos tâches dans le temps avec une interface de calendrier interactive permettant de visualiser les échéances
+- **Gestion des utilisateurs** : Système d'authentification complet avec deux rôles distincts (Manager et Collaborateur)
+- **Permissions différenciées** :
+  - Les managers peuvent créer, modifier et supprimer des tâches pour tous les membres de l'équipe
+  - Les collaborateurs peuvent gérer uniquement leurs propres tâches (créées ou assignées)
 
-## Structure du Projet
+## Architecture et Structure du Projet
+
+TacTâche suit une architecture MVC (Modèle-Vue-Contrôleur) simplifiée, organisée de manière claire et modulaire pour faciliter la maintenance et l'évolution du code :
+
+### Organisation des fichiers
 
 ```
-To-Do-App/
-├── database/
-│   └── init.sql                # Script d'initialisation de la base de données
-├── public/
-│   ├── assets/
-│   │   ├── css/                # Fichiers CSS
-│   │   └── js/                 # Fichiers JavaScript
-│   ├── calendar.php            # Page de calendrier
-│   ├── index.php               # Page principale (tableau Kanban)
-│   ├── login.php               # Page de connexion
-│   ├── logout.php              # Script de déconnexion
-│   ├── register.php            # Page d'inscription
-│   └── task.php                # Page de détail d'une tâche
-└── src/
-    ├── actions/                # Scripts d'action (API)
-    ├── classes/                # Classes PHP
-    └── includes/               # Fichiers inclus (configuration, etc.)
+TacTâche/
+├── database/              # Scripts SQL pour la base de données
+│   └── init.sql           # Script d'initialisation de la base de données
+├── public/                # Fichiers accessibles publiquement (Vues)
+│   ├── assets/            # Ressources statiques (CSS, JS, images)
+│   │   ├── css/           # Feuilles de style CSS
+│   │   ├── js/            # Scripts JavaScript
+│   │   └── img/           # Images
+│   ├── index.php          # Page principale (tableau Kanban)
+│   ├── calendar.php       # Vue calendrier
+│   ├── login.php          # Page de connexion
+│   ├── register.php       # Page d'inscription
+│   ├── logout.php         # Déconnexion
+│   └── task.php           # Détails d'une tâche
+└── src/                   # Code source PHP
+    ├── actions/           # Contrôleurs pour les actions AJAX
+    │   ├── task_api.php   # API centralisée pour les opérations sur les tâches
+    │   ├── get_users.php  # Récupération des utilisateurs
+    │   ├── login_action.php # Traitement de la connexion
+    │   └── register_action.php # Traitement de l'inscription
+    ├── classes/           # Classes PHP (Modèles)
+    │   ├── Database.php   # Gestion de la connexion à la base de données
+    │   ├── Task.php       # Gestion des tâches
+    │   ├── User.php       # Gestion des utilisateurs
+    │   └── Utility.php    # Fonctions utilitaires
+    └── includes/          # Fichiers inclus (configuration, utilitaires)
+        ├── config.php     # Configuration de l'application
+        └── helpers.php    # Fonctions d'aide
 ```
 
-## Technologies Utilisées
+### Principes d'architecture
 
-- **Backend** : PHP 7.4+
-- **Base de données** : MySQL
-- **Frontend** : HTML, CSS, JavaScript
-- **Bibliothèques** : Axios (AJAX), FullCalendar (calendrier)
+- **Modèles** (Model) :
+  - Classes PHP dans `src/classes/` qui encapsulent la logique métier et l'accès aux données
+  - Chaque classe représente une entité du domaine (Task, User) avec ses opérations associées
+  - Séparation claire des responsabilités entre les différentes classes
 
-## Installation
+- **Vues** (View) :
+  - Fichiers PHP dans `public/` qui gèrent l'affichage et l'interface utilisateur
+  - Utilisation de HTML, CSS et JavaScript pour créer une interface interactive
+  - Séparation du contenu (HTML), de la présentation (CSS) et du comportement (JavaScript)
 
-1. Clonez ce dépôt dans votre répertoire web (par exemple, `htdocs` pour XAMPP)
-2. Créez une base de données MySQL nommée `task_manager`
-3. Importez le fichier `database/init.sql` pour créer les tables nécessaires
-4. Configurez les paramètres de connexion à la base de données dans `src/includes/config.php`
-5. Accédez à l'application via votre navigateur (par exemple, `http://localhost/To-Do-App/public/`)
+- **Contrôleurs** (Controller) :
+  - Scripts dans `src/actions/` qui traitent les requêtes HTTP et les actions utilisateur
+  - API centralisée (`task_api.php`) pour toutes les opérations CRUD sur les tâches
+  - Validation des données et gestion des permissions avant traitement
 
-## Utilisation
-
-### Inscription et Connexion
-
-1. Accédez à la page d'inscription pour créer un compte
-2. Connectez-vous avec vos identifiants
-
-### Gestion des Tâches
-
-- **Créer une tâche** : Cliquez sur "Nouvelle tâche" et remplissez le formulaire
-- **Modifier une tâche** : Cliquez sur l'icône de modification d'une tâche
-- **Supprimer une tâche** : Cliquez sur l'icône de suppression d'une tâche
-- **Changer le statut** : Modifiez une tâche et changez son statut
-
-### Vue Calendrier
-
-- Accédez à la page Calendrier pour visualiser les tâches par date
-- Cliquez sur une tâche dans le calendrier pour voir ses détails
+Cette architecture permet une séparation claire des responsabilités, facilitant la maintenance et l'évolution de l'application.
 
 ## Rôles et Permissions
 
-### Manager
+L'application TacTâche implémente un système de contrôle d'accès basé sur les rôles (RBAC) avec deux profils utilisateur distincts :
 
-- Accès complet à toutes les tâches
-- Peut créer, modifier et supprimer n'importe quelle tâche
-- Peut assigner des tâches à n'importe quel utilisateur
+### Manager
+- **Création de tâches** : Peut créer des tâches et les assigner à n'importe quel utilisateur
+- **Gestion globale** : Peut modifier et supprimer toutes les tâches, quel que soit leur créateur
+- **Assignation** : Peut réassigner une tâche à un autre utilisateur à tout moment
+- **Supervision** : A accès à une vue d'ensemble de toutes les tâches et de leur progression
+- **Administration** : A accès à toutes les fonctionnalités de l'application
 
 ### Collaborateur
+- **Création limitée** : Peut créer des tâches mais ne peut les assigner qu'à lui-même
+- **Gestion personnelle** : Peut modifier et supprimer uniquement les tâches qu'il a créées ou qui lui sont assignées
+- **Visibilité** : Peut voir les tâches des autres utilisateurs mais ne peut pas les modifier
+- **Statut** : Peut changer le statut de ses propres tâches (À Faire, En Cours, Terminé)
 
-- Peut créer des tâches pour lui-même
-- Peut modifier les tâches qu'il a créées ou qui lui sont assignées
-- Peut voir toutes les tâches dans la vue calendrier
-
-## Structure des Classes
-
-### User
-
-Gère l'authentification et les permissions des utilisateurs.
-
-### Task
-
-Gère les opérations CRUD (Création, Lecture, Mise à jour, Suppression) des tâches.
-
-### Database
-
-Gère la connexion à la base de données.
-
-### Utility
-
-Fournit des fonctions utilitaires pour l'application.
+### Règles communes
+- Tous les utilisateurs peuvent consulter le calendrier des tâches
+- Tous les utilisateurs peuvent filtrer et rechercher des tâches
 
 ## Développement
 
-Cette application est conçue pour être simple et facile à comprendre, avec une structure orientée objet. Elle est idéale pour les projets d'apprentissage et peut être étendue avec des fonctionnalités supplémentaires.
+### Technologies utilisées
 
-## Licence
+TacTâche utilise les technologies suivantes :
 
-Ce projet est disponible sous licence MIT. Voir le fichier LICENSE pour plus de détails.
+- **Backend** :
+  - **PHP** : Programmation orientée objet
+  - **PDO** : Requêtes préparées pour l'accès à la base de données
+  - **Sessions PHP** : Gestion de l'authentification utilisateur
+
+- **Base de données** :
+  - **MySQL** : Stockage des données
+  - **Clés étrangères** : Relations entre utilisateurs et tâches
+
+- **Frontend** :
+  - **HTML/CSS** : Interface utilisateur
+  - **JavaScript** : Interactivité côté client
+  - **Responsive Design** : Adaptation à différentes tailles d'écran
+
+- **Bibliothèques** :
+  - **FullCalendar** : Affichage des tâches dans un calendrier
+  - **Axios** : Requêtes AJAX pour les opérations sans rechargement de page
+  - **Font Awesome** : Icônes pour l'interface
+
+### Fonctionnalités de sécurité
+
+- **Authentification** : Système de connexion sécurisé
+- **Hachage des mots de passe** : Utilisation de password_hash()
+- **Validation des données** : Vérification des entrées utilisateur
+- **Contrôle d'accès** : Permissions basées sur les rôles utilisateur
+
