@@ -1,4 +1,4 @@
-²# PHP project .gitignore file
+# TacTâche - .gitignore file
 
 # XAMPP/PHP specific
 /vendor/
@@ -7,6 +7,9 @@ composer.phar
 .phpunit.result.cache
 .php_cs.cache
 .php-cs-fixer.cache
+php_errors.log
+error_log
+access_log
 
 # IDE and editor files
 .idea/
@@ -17,6 +20,7 @@ composer.phar
 *.swo
 *~
 .DS_Store
+.editorconfig
 
 # Environment files
 .env
@@ -25,6 +29,7 @@ composer.phar
 .env.development
 .env.test
 .env.production
+.htaccess
 
 # Logs and databases
 *.log
@@ -37,6 +42,10 @@ composer.phar
 /public/uploads/tasks/*
 !/public/uploads/tasks/.gitkeep
 
+# TCPDF specific files
+/lib/tcpdf/fonts/*.z
+/lib/tcpdf/fonts/*.ctg.z
+
 # Cache and temporary files
 /cache/
 /tmp/
@@ -44,6 +53,10 @@ composer.phar
 *.tmp
 *.bak
 *.cache
+*.old
+*_backup*
+*.backup
+*.orig
 
 # Build and deployment files
 /build/
@@ -59,3 +72,4 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+.directory

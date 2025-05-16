@@ -31,7 +31,7 @@ if ($userObj->isLoggedIn()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - TacTâche</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/login.css">
 
 </head>
@@ -54,7 +54,7 @@ if ($userObj->isLoggedIn()) {
                     <i class="fas fa-lock input-icon"></i>
                 </div>
 
-                <button type="submit" class="login-button">Se connecter</button>
+                <button type="submit" class="btn-primary login-button">Se connecter</button>
             </form>
 
             <div class="signup-link">
@@ -64,7 +64,7 @@ if ($userObj->isLoggedIn()) {
     </div>
 
     <!-- Font Awesome pour les icônes -->
-    <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Script de gestion du formulaire -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

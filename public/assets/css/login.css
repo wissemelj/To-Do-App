@@ -134,29 +134,7 @@ body {
     pointer-events: none;
 }
 
-.login-button {
-    width: 100%;
-    padding: 10px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-md);
-}
-
-.login-button:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
-
-.login-button:active {
-    transform: translateY(1px);
-}
+/* Login button styles are now in styles.css */
 
 .signup-link {
     text-align: center;
