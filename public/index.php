@@ -1,33 +1,24 @@
 <?php
-// --- Authentification ---
 require_once '../src/includes/auth.php';
-requireLogin();
-
-// --- Connexion à la base de données ---
 require_once '../src/includes/database.php';
 require_once '../src/includes/utils.php';
 
+requireLogin();
 $userId = getLoggedInUserId();
-
-// --- Vérifier si le nom d'utilisateur est dans la session ---
 ensureUsernameInSession($pdo, $userId);
-
-// --- Récupération et organisation des tâches par statut ---
 $tasksByStatus = getTasksByStatus($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de bord - Task Manager</title>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/index.css">
-
 </head>
 <body>
     <div class="container">
-        <!-- En-tête -->
         <header class="dashboard-header">
             <div class="header-left">
                 <h1 class="header-title">Tâches</h1>
@@ -35,12 +26,11 @@ $tasksByStatus = getTasksByStatus($pdo);
             </div>
             <div>
                 <button class="btn-primary" onclick="showTaskForm()">+ Nouvelle tâche</button>
-                <a href="calendar.php" class="btn-primary" >Calendrier</a>
+                <a href="calendar.php" class="btn-primary">Calendrier</a>
                 <a href="logout.php" class="btn-primary" style="margin-left: 10px;">Déconnexion</a>
             </div>
         </header>
 
-        <!-- Tableau des tâches -->
         <div class="board">
             <?php foreach (getStatusLabels() as $status => $label): ?>
             <div class="column">
@@ -67,10 +57,10 @@ $tasksByStatus = getTasksByStatus($pdo);
                             <span class="task-due">📅 <?= formatDate($task['due_date']) ?></span>
                             <?php endif; ?>
                             <?php if ($task['assigned_username']): ?>
-                            <span class="task-assignee">👤 Assigné à: <?= h($task['assigned_username']) ?></span>
+                            <span class="task-assignee">👤 <?= h($task['assigned_username']) ?></span>
                             <?php endif; ?>
                             <?php if (isset($task['creator_username'])): ?>
-                            <span class="task-creator">📝 Créé par: <?= h($task['creator_username']) ?></span>
+                            <span class="task-creator">📝 <?= h($task['creator_username']) ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -80,7 +70,6 @@ $tasksByStatus = getTasksByStatus($pdo);
             <?php endforeach; ?>
         </div>
 
-        <!-- Formulaire de création -->
         <div id="taskForm" class="modal-overlay" style="display: none;">
             <div class="modal-content">
                 <h3>Créer une nouvelle tâche</h3>
@@ -97,23 +86,20 @@ $tasksByStatus = getTasksByStatus($pdo);
                     <div class="form-group">
                         <label for="task-assigned">Assigner à:</label>
                         <?php if (isCollaborator()): ?>
-                            <!-- Pour les collaborateurs, seule l'auto-assignation est possible -->
                             <input type="hidden" name="assigned_to" value="<?= getLoggedInUserId() ?>">
                             <select id="task-assigned" disabled>
-                                <option value="<?= getLoggedInUserId() ?>"><?= htmlspecialchars($_SESSION['username'] ?? 'Vous-même') ?></option>
+                                <option value="<?= getLoggedInUserId() ?>"><?= h($_SESSION['username'] ?? 'Vous-même') ?></option>
                             </select>
+                            <small class="form-hint">En tant que collaborateur, vous ne pouvez créer des tâches que pour vous-même.</small>
                         <?php else: ?>
                             <select id="task-assigned" name="assigned_to">
                                 <option value="">Personne</option>
                                 <?php
                                 $users = $pdo->query("SELECT id, username FROM users")->fetchAll();
                                 foreach ($users as $user): ?>
-                                <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
+                                <option value="<?= $user['id'] ?>"><?= h($user['username']) ?></option>
                                 <?php endforeach; ?>
                             </select>
-                        <?php endif; ?>
-                        <?php if (isCollaborator()): ?>
-                            <small class="form-hint">En tant que collaborateur, vous ne pouvez créer des tâches que pour vous-même.</small>
                         <?php endif; ?>
                     </div>
                     <div class="form-group">
@@ -129,42 +115,23 @@ $tasksByStatus = getTasksByStatus($pdo);
         </div>
     </div>
 
-    <!-- JS externe -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="assets/js/common.js"></script>
 
     <script>
-    // État global
     let users = [];
 
-    // Initialisation
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            await loadUsers();
+            const response = await axios.get(API_PATHS.GET_USERS);
+            if (response.data.success) {
+                users = response.data.data;
+            }
         } catch (error) {
             console.error('Erreur initialisation:', error);
         }
     });
 
-    // Fonctions utilitaires
-    async function loadUsers() {
-        const response = await axios.get(API_PATHS.GET_USERS);
-        if (response.data.success) {
-            users = response.data.data;
-            updateAssignSelect();
-        }
-        return users;
-    }
-
-    function updateAssignSelect() {
-        const select = document.getElementById('assignedToSelect');
-        if (!select) return;
-
-        select.innerHTML = `<option value="">Personne</option>` +
-            users.map(user => `<option value="${user.id}">${user.username}</option>`).join('');
-    }
-
-    // Gestion des formulaires
     function showTaskForm() {
         toggleModal('taskForm', true);
     }
@@ -175,7 +142,6 @@ $tasksByStatus = getTasksByStatus($pdo);
 
     document.getElementById('newTaskForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const formData = {
             title: e.target.title.value,
             description: e.target.description.value,
@@ -195,7 +161,6 @@ $tasksByStatus = getTasksByStatus($pdo);
         }
     });
 
-    // Gestion des tâches
     async function deleteTask(taskId) {
         if (!confirm('Supprimer cette tâche définitivement ?')) return;
 
@@ -224,10 +189,20 @@ $tasksByStatus = getTasksByStatus($pdo);
     }
 
     function showEditForm(task) {
-        // Vérifier si l'utilisateur est un collaborateur
         const isCollaborator = <?= isCollaborator() ? 'true' : 'false' ?>;
         const currentUserId = <?= getLoggedInUserId() ?>;
         const currentUsername = '<?= h($_SESSION['username'] ?? 'Vous-même') ?>';
+
+        const assigneeOptions = isCollaborator
+            ? `<input type="hidden" name="assigned_to" value="${currentUserId}">
+               <select id="edit-task-assigned" disabled>
+                 <option value="${currentUserId}" selected>${currentUsername}</option>
+               </select>
+               <small class="form-hint">En tant que collaborateur, vous ne pouvez assigner des tâches qu'à vous-même.</small>`
+            : `<select id="edit-task-assigned" name="assigned_to">
+                 <option value="">Personne</option>
+                 ${users.map(user => `<option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>${user.username}</option>`).join('')}
+               </select>`;
 
         const formHTML = `
         <div class="modal-overlay" id="editModal">
@@ -254,22 +229,7 @@ $tasksByStatus = getTasksByStatus($pdo);
                     </div>
                     <div class="form-group">
                         <label for="edit-task-assigned">Assigné à:</label>
-                        ${isCollaborator
-                            ? `<input type="hidden" name="assigned_to" value="${currentUserId}">
-                               <select id="edit-task-assigned" disabled>
-                               <option value="${currentUserId}" selected>${currentUsername}</option>
-                               </select>`
-                            : `<select id="edit-task-assigned" name="assigned_to">
-                               <option value="">Personne</option>
-                               ${users.map(user => `
-                               <option value="${user.id}" ${task.assigned_to == user.id ? 'selected' : ''}>${user.username}</option>
-                               `).join('')}
-                               </select>`
-                        }
-                        ${isCollaborator
-                            ? `<small class="form-hint">En tant que collaborateur, vous ne pouvez assigner des tâches qu'à vous-même.</small>`
-                            : ''
-                        }
+                        ${assigneeOptions}
                     </div>
                     <div class="form-group">
                         <label for="edit-task-due-date">Date limite:</label>
@@ -281,15 +241,14 @@ $tasksByStatus = getTasksByStatus($pdo);
                     </div>
                 </form>
             </div>
-        </div>
-        `;
+        </div>`;
+
         document.body.insertAdjacentHTML('beforeend', formHTML);
         document.getElementById('editForm').addEventListener('submit', submitEditForm);
     }
 
     async function submitEditForm(e) {
         e.preventDefault();
-
         const formData = {
             id: e.target.id.value,
             title: e.target.title.value,
